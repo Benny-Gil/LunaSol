@@ -13,10 +13,10 @@ export default function Home() {
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>Features</a>
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>About</a>
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>Contact</a>
-          <button style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#374151', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+          <button disabled style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#9ca3af', padding: '8px 20px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '14px', fontWeight: 500, opacity: 0.6 }}>
             Sign in
           </button>
-          <button style={{ background: '#111827', border: 'none', color: '#ffffff', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+          <button disabled style={{ background: '#9ca3af', border: 'none', color: '#ffffff', padding: '8px 20px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '14px', fontWeight: 500 }}>
             Get started
           </button>
         </div>
@@ -34,10 +34,10 @@ export default function Home() {
           Connect with your care team, get AI-powered insights, and manage your health — all in one place.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
+          <button disabled style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#9ca3af', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'not-allowed' }}>
             Get started <ArrowRight size={16} />
           </button>
-          <button style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#374151', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 500, cursor: 'pointer' }}>
+          <button disabled style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#9ca3af', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 500, cursor: 'not-allowed', opacity: 0.6 }}>
             Learn more
           </button>
         </div>
@@ -71,7 +71,7 @@ export default function Home() {
           Ready to take control of your health?
         </h2>
         <p style={{ color: '#6b7280', marginBottom: '32px', fontSize: '16px' }}>Join thousands already on LunaSol.</p>
-        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '14px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'pointer' }}>
+        <button disabled style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#9ca3af', border: 'none', color: '#fff', padding: '14px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'not-allowed' }}>
           Create free account <ArrowRight size={16} />
         </button>
       </section>
