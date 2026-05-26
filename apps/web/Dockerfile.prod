@@ -1,0 +1,41 @@
+FROM node:22-alpine AS builder
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV PNPM_CONFIG_TRUST_LOCKFILE=true
+
+WORKDIR /app
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/types/package.json ./packages/types/
+
+RUN pnpm install --frozen-lockfile
+
+COPY tsconfig.base.json ./
+COPY packages/types ./packages/types
+COPY apps/web ./apps/web
+
+WORKDIR /app/apps/web
+RUN pnpm build
+
+FROM node:22-alpine AS runner
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV PNPM_CONFIG_TRUST_LOCKFILE=true
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/types/package.json ./packages/types/
+
+RUN pnpm install --frozen-lockfile --prod
+
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY packages/types ./packages/types
+
+WORKDIR /app/apps/web
+
+EXPOSE 3000
+CMD ["pnpm", "start"]
