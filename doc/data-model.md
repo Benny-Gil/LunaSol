@@ -7,16 +7,16 @@ erDiagram
     User ||--o| PatientProfile : "has profile"
     User ||--o| DoctorProfile : "has profile"
     User ||--o{ Notification : "receives"
-    
+
     DoctorProfile ||--o{ AvailabilitySlot : "schedules"
     DoctorProfile ||--o{ Appointment : "attends"
-    
+
     PatientProfile ||--o{ Appointment : "books"
-    
+
     AvailabilitySlot ||--o| Appointment : "allocates"
-    
+
     Appointment ||--o| ConsultationRecord : "generates"
-    
+
     ConsultationRecord ||--o{ Prescription : "contains"
 
     User {
@@ -99,10 +99,10 @@ erDiagram
     }
 ```
 
-
 ## Schema
 
 ### User
+
 ```
 id              String    @id @default(cuid())
 email           String    @unique
@@ -111,9 +111,11 @@ role            Role      (PATIENT | DOCTOR)
 createdAt       DateTime
 updatedAt       DateTime
 ```
+
 Central auth record. Thin — profile details live in the role-specific tables.
 
 ### PatientProfile
+
 ```
 id              String
 userId          String    @unique  FK → User
@@ -128,6 +130,7 @@ medicalHistory  String?
 ```
 
 ### DoctorProfile
+
 ```
 id              String
 userId          String    @unique  FK → User
@@ -139,6 +142,7 @@ contactDetails  String?
 ```
 
 ### AvailabilitySlot
+
 ```
 id              String
 doctorId        String    FK → DoctorProfile
@@ -148,6 +152,7 @@ isBlocked       Boolean   @default(false)
 ```
 
 ### Appointment
+
 ```
 id              String
 patientId       String    FK → PatientProfile
@@ -160,6 +165,7 @@ updatedAt       DateTime
 ```
 
 ### ConsultationRecord
+
 ```
 id              String
 appointmentId   String    @unique  FK → Appointment
@@ -169,6 +175,7 @@ updatedAt       DateTime
 ```
 
 ### Prescription
+
 ```
 id              String
 consultationRecordId  String  FK → ConsultationRecord
@@ -181,6 +188,7 @@ createdAt       DateTime
 ```
 
 ### Notification
+
 ```
 id              String
 recipientId     String    FK → User
@@ -201,6 +209,7 @@ The fields for patients (weight, height, medical history) and doctors (bio, spec
 ### AvailabilitySlot as a first-class entity
 
 Availability could have been modeled as a simple schedule config (e.g., "Mondays 9–5"). A first-class `AvailabilitySlot` table was chosen instead because:
+
 - Individual slot blocking is required (not just recurring patterns)
 - Booked slots need to reference a specific slot ID on the Appointment
 - Querying available slots for a date range is a simple `WHERE isBlocked = false AND id NOT IN (booked slots)`

@@ -45,6 +45,7 @@ lunasol/
 **Decision:** Turborepo + pnpm workspaces over separate repositories.
 
 **Rationale:**
+
 - `packages/types` can be shared between `apps/web` and `apps/api` without a publish step — both apps always use the same DTO definitions
 - `pnpm` deduplicates `node_modules` across packages, keeping the repo lean
 - Turborepo's task graph ensures apps build in dependency order and caches results
@@ -54,11 +55,11 @@ lunasol/
 
 ## Why Three App Services?
 
-| Service | Language | Why separate |
-|---|---|---|
-| `web` | TypeScript (Next.js) | Frontend; SSR requires its own Node process |
-| `api` | TypeScript (NestJS) | Backend; owns the database, auth, and business logic |
-| `ai` | Python (FastAPI) | Inference requires Python (`llama-cpp-python`); isolated so a slow model load doesn't affect the main API |
+| Service | Language             | Why separate                                                                                              |
+| ------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `web`   | TypeScript (Next.js) | Frontend; SSR requires its own Node process                                                               |
+| `api`   | TypeScript (NestJS)  | Backend; owns the database, auth, and business logic                                                      |
+| `ai`    | Python (FastAPI)     | Inference requires Python (`llama-cpp-python`); isolated so a slow model load doesn't affect the main API |
 
 Keeping `ai` separate also means the AI service can be scaled, swapped, or restarted independently without touching the main backend.
 
@@ -72,14 +73,14 @@ To facilitate scaling and support potential future transition to microservices, 
    The application is divided into self-contained domain modules (`users`, `availability`, `appointments`, `consultations`, `notifications`). Each module encapsulates its own business logic, controllers, services, and DTOs.
 
 2. **Database Access Isolation**:
-   A service in domain module `A` **must never** query database tables/models owned by domain module `B` directly through `PrismaService`. All database interaction is encapsulated inside the respective owning module. 
-   - *Example*: If the `appointments` module needs to fetch doctor details or check availability, it must query `UsersService` or `AvailabilityService` respectively.
-   - *Microservice Readiness*: This ensures that if the monolithic database is later split into separate databases per service, the modules will not break.
+   A service in domain module `A` **must never** query database tables/models owned by domain module `B` directly through `PrismaService`. All database interaction is encapsulated inside the respective owning module.
+   - _Example_: If the `appointments` module needs to fetch doctor details or check availability, it must query `UsersService` or `AvailabilityService` respectively.
+   - _Microservice Readiness_: This ensures that if the monolithic database is later split into separate databases per service, the modules will not break.
 
 3. **Asynchronous Decoupling via Events**:
    Cross-domain triggers that are asynchronous or side-effects (e.g. creating user alerts upon booking an appointment) should be decoupled using an event-driven mechanism (e.g. NestJS `EventEmitter2` or simple pub/sub).
-   - *Example*: Emitting an `appointment.booked` event from `AppointmentsService` that `NotificationsService` listens to.
-   - *Microservice Readiness*: When transitioning to microservices, the in-process event emitter can be swapped with an external message broker (like RabbitMQ, Kafka, or Redis) with minimal code changes.
+   - _Example_: Emitting an `appointment.booked` event from `AppointmentsService` that `NotificationsService` listens to.
+   - _Microservice Readiness_: When transitioning to microservices, the in-process event emitter can be swapped with an external message broker (like RabbitMQ, Kafka, or Redis) with minimal code changes.
 
 4. **Circular Dependency Prevention**:
    Dependencies between modules must flow in one direction. Circular module imports are strictly prohibited.
