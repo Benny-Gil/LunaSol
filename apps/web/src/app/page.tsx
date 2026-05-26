@@ -25,13 +25,13 @@ export default function Home() {
       {/* Hero */}
       <section style={{ textAlign: 'center', padding: '96px 24px 80px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'inline-block', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '999px', padding: '5px 14px', fontSize: '13px', color: '#6b7280', marginBottom: '28px', fontWeight: 500 }}>
-          Telehealth · AI-Assisted Care
+          Telehealth · Digital Care
         </div>
         <h1 style={{ fontSize: 'clamp(36px, 6vw, 64px)', fontWeight: 800, lineHeight: 1.1, margin: '0 auto 20px', maxWidth: '760px', color: '#111827', letterSpacing: '-1.5px' }}>
-          Healthcare, reimagined with AI
+          Better care, closer to you
         </h1>
         <p style={{ fontSize: '18px', color: '#6b7280', maxWidth: '500px', margin: '0 auto 44px', lineHeight: 1.7 }}>
-          Connect with your care team, get AI-powered insights, and manage your health — all in one place.
+          Connect with your care team, track your health, and manage appointments — all in one place.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button disabled style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#9ca3af', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'not-allowed' }}>
@@ -50,7 +50,7 @@ export default function Home() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
           {[
             { Icon: Video, title: 'Virtual Consultations', desc: 'Connect with licensed providers from home via secure video or chat.' },
-            { Icon: Bot, title: 'AI Health Assistant', desc: 'Get instant answers and triage guidance powered by our AI model.' },
+            { Icon: Bot, title: 'Health Assistant', desc: 'Get instant answers and triage guidance from our clinical support tool.' },
             { Icon: FolderOpen, title: 'Health Records', desc: 'All your records, prescriptions, and history in one secure place.' },
             { Icon: Bell, title: 'Smart Reminders', desc: 'Never miss a medication, appointment, or follow-up.' },
           ].map(({ Icon, title, desc }) => (
