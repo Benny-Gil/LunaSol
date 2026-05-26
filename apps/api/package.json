@@ -1,0 +1,25 @@
+{
+  "name": "@lunasol/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@lunasol/types": "workspace:*",
+    "@nestjs/common": "^11.1.1",
+    "@nestjs/core": "^11.1.1",
+    "@nestjs/platform-express": "^11.1.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.7",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}
