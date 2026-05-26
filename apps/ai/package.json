@@ -1,0 +1,10 @@
+{
+  "name": "@lunasol/ai",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uvicorn src.main:app --reload --port 8000",
+    "build": "echo 'No build step for FastAPI'",
+    "lint": "echo 'No lint step for FastAPI'"
+  }
+}
