@@ -3,6 +3,7 @@
 ## Stack: NestJS
 
 **Why NestJS over plain Express/Fastify:**
+
 - Module system enforces separation of concerns — each feature is a self-contained module (controller, service, DTOs)
 - Built-in dependency injection makes services easy to test and compose
 - First-class TypeScript with decorators for validation, guards, and interceptors
@@ -13,6 +14,7 @@
 ## Conventions
 
 ### URL Structure
+
 ```
 /api/<resource>           collection
 /api/<resource>/:id       single item
@@ -20,6 +22,7 @@
 ```
 
 Examples:
+
 ```
 GET  /api/doctors               public doctor list
 GET  /api/doctors/:id           public doctor profile
@@ -29,17 +32,20 @@ GET  /api/appointments/mine     current user's appointments
 ```
 
 ### HTTP Methods
-| Method | Use |
-|---|---|
-| `GET` | Read — never mutates state |
-| `POST` | Create a new resource |
-| `PATCH` | Partial update — only send changed fields |
+
+| Method   | Use                                            |
+| -------- | ---------------------------------------------- |
+| `GET`    | Read — never mutates state                     |
+| `POST`   | Create a new resource                          |
+| `PATCH`  | Partial update — only send changed fields      |
 | `DELETE` | Hard delete (used only for availability slots) |
 
 `PUT` is not used — `PATCH` is always preferred for partial updates.
 
 ### Response Shape
+
 Success:
+
 ```json
 {
   "data": { ... }
@@ -47,6 +53,7 @@ Success:
 ```
 
 Error:
+
 ```json
 {
   "statusCode": 404,
@@ -61,22 +68,25 @@ NestJS's built-in exception filters handle this format automatically via `HttpEx
 
 ## Module Structure
 
-Each feature is a NestJS module:
+To align with the Modular Monolith guidelines defined in [architecture.md](file:///home/benn/lunasol/doc/architecture.md), each feature is a decoupled NestJS module under `src/modules/`:
 
 ```
 src/
-├── auth/           # Webhook, guards
-├── patients/       # PatientProfile CRUD
-├── doctors/        # DoctorProfile CRUD + public listing
-├── availability/   # AvailabilitySlot management
-├── appointments/   # Booking, rescheduling, cancellation, status
-├── records/        # ConsultationRecord + Prescription
-├── notifications/  # Notification persistence + Socket.io gateway
-├── ai/             # SSE relay to FastAPI
-└── common/         # Shared guards, decorators, interceptors
+├── prisma/             # Global Prisma Service
+├── common/             # Shared guards, decorators, and interceptors
+└── modules/
+    ├── users/          # Identity and profiles (User, PatientProfile, DoctorProfile CRUD)
+    ├── availability/   # Doctor availability slot scheduling
+    ├── appointments/   # Patient-doctor booking flow
+    ├── consultations/  # Clinical notes (ConsultationRecord) + Prescriptions
+    └── notifications/  # User alerts and Socket.io gateway
 ```
 
-Each module owns its own controller, service, and DTOs. Cross-module communication goes through injected services, never through direct DB calls from another module's controller.
+### Decoupling and Boundary Rules
+
+- **Encapsulated Queries**: Each module service queries only the Prisma models it owns.
+- **Service-to-Service Calls**: Cross-module queries or mutations must call exported services from peer modules, not database queries directly.
+- **Event-Driven Integration**: Asynchronous side-effects (e.g. notifications triggered by bookings) use event publishing (`EventEmitter2`) to avoid direct module dependencies.
 
 ---
 
@@ -104,6 +114,7 @@ Business rule violations (e.g., booking a blocked slot) return **409 Conflict** 
 ## Pagination
 
 List endpoints use cursor-based pagination:
+
 ```
 GET /api/doctors?cursor=<lastId>&limit=20
 ```

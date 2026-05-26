@@ -14,10 +14,10 @@ A telehealth web application that connects patients with doctors for online cons
 
 ## Modules
 
-| Module | Description |
-|--------|-------------|
-| Patient | Register, discover doctors, book consultations, view medical records |
-| Doctor | Manage availability, conduct consultations, write notes and prescriptions |
+| Module  | Description                                                               |
+| ------- | ------------------------------------------------------------------------- |
+| Patient | Register, discover doctors, book consultations, view medical records      |
+| Doctor  | Manage availability, conduct consultations, write notes and prescriptions |
 
 ## Stack
 

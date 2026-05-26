@@ -40,6 +40,5 @@ Thumbs.db
 .copilot/
 .aider*
 
-# Local/private files
-planning/
-*.pdf
+# Local/private files — exclude hackathon brief but track planning docs
+planning

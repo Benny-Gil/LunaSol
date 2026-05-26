@@ -3,6 +3,7 @@
 ## Decision: Local GGUF Model over External API
 
 **Why local inference:**
+
 - No API key, no per-request cost, no rate limits
 - Patient symptom data never leaves the server — critical for a healthcare application
 - Works fully offline after setup
@@ -15,12 +16,14 @@
 ## Stack: FastAPI + llama-cpp-python
 
 **Why FastAPI:**
+
 - Python is required — `llama-cpp-python` is a Python binding for `llama.cpp`
 - FastAPI is async-first and handles streaming responses natively via `StreamingResponse`
 - Type annotations + Pydantic for request validation
 - Fast startup compared to Django or Flask
 
 **Why llama-cpp-python over Ollama or Transformers:**
+
 - `llama-cpp-python` is a thin wrapper around `llama.cpp` — minimal overhead, runs on CPU without GPU
 - No separate daemon process (unlike Ollama)
 - GGUF format is widely supported and models are available at various quantization levels to balance quality vs. speed
@@ -32,6 +35,7 @@
 ## Service Design
 
 ### Endpoint
+
 ```
 POST /recommend
 Content-Type: application/json
@@ -48,13 +52,16 @@ Content-Type: application/json
 Response: `text/event-stream` (SSE)
 
 ### Why SSE over WebSocket or plain HTTP
+
 - The recommendation is a one-way stream from server to browser — SSE is the right primitive
 - SSE works over standard HTTP, no special proxy config needed
 - Browser's `EventSource` API handles reconnection automatically
 - WebSocket would be overkill for a one-shot request/stream pattern
 
 ### Prompt Design
+
 The model receives a structured prompt:
+
 1. System context: "You are a medical triage assistant..."
 2. Available doctors (id, name, specialization)
 3. Patient's symptom description
@@ -81,6 +88,7 @@ Browser  →  NestJS  →  FastAPI  →  llama-cpp-python
 5. After the stream closes, emit a final `data: {"type":"doctors","payload":[...]}` event with full doctor objects from the DB
 
 ### Fallback
+
 If FastAPI is unavailable or returns an error, NestJS returns all doctors as a fallback `doctors` event without any AI reasoning. The patient still gets a list of doctors — the AI reasoning is just absent.
 
 ---
@@ -88,6 +96,7 @@ If FastAPI is unavailable or returns an error, NestJS returns all doctors as a f
 ## Docker Volume for Model File
 
 The GGUF model file is large (1–4 GB depending on quantization) and changes independently of the code. It is:
+
 - Stored on the host at `/data/models/model.gguf`
 - Mounted into the `ai` container at `/models/model.gguf`
 - **Never committed to the repository**

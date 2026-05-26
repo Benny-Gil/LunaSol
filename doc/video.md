@@ -2,14 +2,15 @@
 
 ## Decision: Self-Hosted Jitsi over Daily.co / Agora / Twilio
 
-| Option | Cost | Control | Complexity |
-|---|---|---|---|
-| Daily.co | Paid after free tier | Low | Low |
-| Agora | 10k min/month free | Medium | Medium |
-| Jitsi self-hosted | Free (self-hosted) | Full | Medium |
-| Custom WebRTC | Free | Full | Very high |
+| Option            | Cost                 | Control | Complexity |
+| ----------------- | -------------------- | ------- | ---------- |
+| Daily.co          | Paid after free tier | Low     | Low        |
+| Agora             | 10k min/month free   | Medium  | Medium     |
+| Jitsi self-hosted | Free (self-hosted)   | Full    | Medium     |
+| Custom WebRTC     | Free                 | Full    | Very high  |
 
 **Why Jitsi:**
+
 - Completely free — no usage limits, no external billing
 - Runs in Docker on the same server — no third-party data handling
 - JWT room authentication is built-in — rooms can be locked to specific participants
@@ -24,12 +25,12 @@
 
 Four services work together:
 
-| Container | Role |
-|---|---|
-| `jitsi/web` | Jitsi Meet web interface |
-| `jitsi/prosody` | XMPP server — handles signalling |
-| `jitsi/jicofo` | Conference focus — manages sessions |
-| `jitsi/jvb` | Video bridge — relays media streams |
+| Container       | Role                                |
+| --------------- | ----------------------------------- |
+| `jitsi/web`     | Jitsi Meet web interface            |
+| `jitsi/prosody` | XMPP server — handles signalling    |
+| `jitsi/jicofo`  | Conference focus — manages sessions |
+| `jitsi/jvb`     | Video bridge — relays media streams |
 
 All four are on the internal Docker network. Only `jitsi/web` is accessible externally via Nginx at `/meet/*`.
 
@@ -58,6 +59,7 @@ User clicks "Join Session"
 Jitsi is configured with `ENABLE_AUTH=1` and `AUTH_TYPE=jwt`. Every user joining a room must present a valid JWT.
 
 JWT payload:
+
 ```json
 {
   "sub": "meet.<your-domain>",
