@@ -33,6 +33,13 @@ Thumbs.db
 # Docker
 .docker/
 
+# AI tools
+.antigravitycli/
+.cursor/
+.windsurf/
+.copilot/
+.aider*
+
 # Local/private files
-issues/
+planning/
 *.pdf
