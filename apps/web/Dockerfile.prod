@@ -33,7 +33,6 @@ COPY packages/types/package.json ./packages/types/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY packages/types ./packages/types
 
 WORKDIR /app/apps/web
