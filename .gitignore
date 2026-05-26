@@ -39,6 +39,17 @@ Thumbs.db
 .windsurf/
 .copilot/
 .aider*
+.agents/
+
+# Turbo
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
 
 # Local/private files — exclude hackathon brief but track planning docs
 planning
