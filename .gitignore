@@ -41,6 +41,4 @@ Thumbs.db
 .aider*
 
 # Local/private files — exclude hackathon brief but track planning docs
-planning/*.pdf
-planning/*.txt
-*.pdf
+planning
