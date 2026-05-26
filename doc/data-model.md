@@ -2,26 +2,103 @@
 
 ## Entities
 
+```mermaid
+erDiagram
+    User ||--o| PatientProfile : "has profile"
+    User ||--o| DoctorProfile : "has profile"
+    User ||--o{ Notification : "receives"
+    
+    DoctorProfile ||--o{ AvailabilitySlot : "schedules"
+    DoctorProfile ||--o{ Appointment : "attends"
+    
+    PatientProfile ||--o{ Appointment : "books"
+    
+    AvailabilitySlot ||--o| Appointment : "allocates"
+    
+    Appointment ||--o| ConsultationRecord : "generates"
+    
+    ConsultationRecord ||--o{ Prescription : "contains"
+
+    User {
+        string id PK
+        string clerkId UK
+        string email UK
+        Role role
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    PatientProfile {
+        string id PK
+        string userId FK, UK
+        string name
+        datetime birthday
+        float weight
+        float height
+        string profilePictureUrl
+        string phone
+        string address
+        string medicalHistory
+    }
+
+    DoctorProfile {
+        string id PK
+        string userId FK, UK
+        string name
+        string bio
+        string specialization
+        string profilePictureUrl
+        string contactDetails
+    }
+
+    AvailabilitySlot {
+        string id PK
+        string doctorId FK
+        datetime startTime
+        datetime endTime
+        boolean isBlocked
+    }
+
+    Appointment {
+        string id PK
+        string patientId FK
+        string doctorId FK
+        string slotId FK, UK
+        AppointmentStatus status
+        string jitsiRoom
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ConsultationRecord {
+        string id PK
+        string appointmentId FK, UK
+        string notes
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Prescription {
+        string id PK
+        string consultationRecordId FK
+        string medicationName
+        string dosage
+        string frequency
+        string duration
+        string notes
+        datetime createdAt
+    }
+
+    Notification {
+        string id PK
+        string recipientId FK
+        string type
+        string message
+        boolean isRead
+        datetime createdAt
+    }
 ```
-User
-  └── PatientProfile (1:1)
-  └── DoctorProfile  (1:1)
 
-DoctorProfile
-  └── AvailabilitySlot (1:many)
-  └── Appointment      (1:many, as doctor)
-
-PatientProfile
-  └── Appointment      (1:many, as patient)
-
-Appointment
-  └── AvailabilitySlot (many:1)
-  └── ConsultationRecord (1:1)
-      └── Prescription (1:many)
-
-User
-  └── Notification (1:many)
-```
 
 ## Schema
 

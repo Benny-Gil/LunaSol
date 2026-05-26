@@ -61,22 +61,25 @@ NestJS's built-in exception filters handle this format automatically via `HttpEx
 
 ## Module Structure
 
-Each feature is a NestJS module:
+To align with the Modular Monolith guidelines defined in [architecture.md](file:///home/benn/lunasol/doc/architecture.md), each feature is a decoupled NestJS module under `src/modules/`:
 
 ```
 src/
-├── auth/           # Webhook, guards
-├── patients/       # PatientProfile CRUD
-├── doctors/        # DoctorProfile CRUD + public listing
-├── availability/   # AvailabilitySlot management
-├── appointments/   # Booking, rescheduling, cancellation, status
-├── records/        # ConsultationRecord + Prescription
-├── notifications/  # Notification persistence + Socket.io gateway
-├── ai/             # SSE relay to FastAPI
-└── common/         # Shared guards, decorators, interceptors
+├── prisma/             # Global Prisma Service
+├── common/             # Shared guards, decorators, and interceptors
+└── modules/
+    ├── users/          # Identity and profiles (User, PatientProfile, DoctorProfile CRUD)
+    ├── availability/   # Doctor availability slot scheduling
+    ├── appointments/   # Patient-doctor booking flow
+    ├── consultations/  # Clinical notes (ConsultationRecord) + Prescriptions
+    └── notifications/  # User alerts and Socket.io gateway
 ```
 
-Each module owns its own controller, service, and DTOs. Cross-module communication goes through injected services, never through direct DB calls from another module's controller.
+### Decoupling and Boundary Rules
+- **Encapsulated Queries**: Each module service queries only the Prisma models it owns.
+- **Service-to-Service Calls**: Cross-module queries or mutations must call exported services from peer modules, not database queries directly.
+- **Event-Driven Integration**: Asynchronous side-effects (e.g. notifications triggered by bookings) use event publishing (`EventEmitter2`) to avoid direct module dependencies.
+
 
 ---
 
