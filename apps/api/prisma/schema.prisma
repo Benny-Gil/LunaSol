@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  PATIENT
+  DOCTOR
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String          @id @default(cuid())
+  clerkId       String          @unique
+  email         String          @unique
+  role          Role
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  patient       PatientProfile?
+  doctor        DoctorProfile?
+  notifications Notification[]
+}
+
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+
+model PatientProfile {
+  id                String        @id @default(cuid())
+  userId            String        @unique
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  birthday          DateTime
+  weight            Float
+  height            Float
+  profilePictureUrl String?
+  phone             String?
+  address           String?
+  medicalHistory    String?
+  appointments      Appointment[]
+}
+
+model DoctorProfile {
+  id                String             @id @default(cuid())
+  userId            String             @unique
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  bio               String?
+  specialization    String
+  profilePictureUrl String?
+  contactDetails    String?
+  slots             AvailabilitySlot[]
+  appointments      Appointment[]
+}
+
+// ─── Availability ─────────────────────────────────────────────────────────────
+
+model AvailabilitySlot {
+  id          String        @id @default(cuid())
+  doctorId    String
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startTime   DateTime
+  endTime     DateTime
+  isBlocked   Boolean       @default(false)
+  appointment Appointment?
+}
+
+// ─── Appointments ─────────────────────────────────────────────────────────────
+
+model Appointment {
+  id        String             @id @default(cuid())
+  patientId String
+  patient   PatientProfile     @relation(fields: [patientId], references: [id])
+  doctorId  String
+  doctor    DoctorProfile      @relation(fields: [doctorId], references: [id])
+  slotId    String             @unique
+  slot      AvailabilitySlot   @relation(fields: [slotId], references: [id])
+  status    AppointmentStatus  @default(PENDING)
+  jitsiRoom String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  record    ConsultationRecord?
+}
+
+// ─── Consultation ──────────────────────────────────────────────────────────────
+
+model ConsultationRecord {
+  id            String         @id @default(cuid())
+  appointmentId String         @unique
+  appointment   Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id                   String             @id @default(cuid())
+  consultationRecordId String
+  consultationRecord   ConsultationRecord @relation(fields: [consultationRecordId], references: [id], onDelete: Cascade)
+  medicationName       String
+  dosage               String
+  frequency            String
+  duration             String
+  notes                String?
+  createdAt            DateTime           @default(now())
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id          String   @id @default(cuid())
+  recipientId String
+  recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  type        String
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
