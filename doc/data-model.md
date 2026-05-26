@@ -2,30 +2,107 @@
 
 ## Entities
 
-```
-User
-  └── PatientProfile (1:1)
-  └── DoctorProfile  (1:1)
+```mermaid
+erDiagram
+    User ||--o| PatientProfile : "has profile"
+    User ||--o| DoctorProfile : "has profile"
+    User ||--o{ Notification : "receives"
 
-DoctorProfile
-  └── AvailabilitySlot (1:many)
-  └── Appointment      (1:many, as doctor)
+    DoctorProfile ||--o{ AvailabilitySlot : "schedules"
+    DoctorProfile ||--o{ Appointment : "attends"
 
-PatientProfile
-  └── Appointment      (1:many, as patient)
+    PatientProfile ||--o{ Appointment : "books"
 
-Appointment
-  └── AvailabilitySlot (many:1)
-  └── ConsultationRecord (1:1)
-      └── Prescription (1:many)
+    AvailabilitySlot ||--o| Appointment : "allocates"
 
-User
-  └── Notification (1:many)
+    Appointment ||--o| ConsultationRecord : "generates"
+
+    ConsultationRecord ||--o{ Prescription : "contains"
+
+    User {
+        string id PK
+        string clerkId UK
+        string email UK
+        Role role
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    PatientProfile {
+        string id PK
+        string userId FK, UK
+        string name
+        datetime birthday
+        float weight
+        float height
+        string profilePictureUrl
+        string phone
+        string address
+        string medicalHistory
+    }
+
+    DoctorProfile {
+        string id PK
+        string userId FK, UK
+        string name
+        string bio
+        string specialization
+        string profilePictureUrl
+        string contactDetails
+    }
+
+    AvailabilitySlot {
+        string id PK
+        string doctorId FK
+        datetime startTime
+        datetime endTime
+        boolean isBlocked
+    }
+
+    Appointment {
+        string id PK
+        string patientId FK
+        string doctorId FK
+        string slotId FK, UK
+        AppointmentStatus status
+        string jitsiRoom
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    ConsultationRecord {
+        string id PK
+        string appointmentId FK, UK
+        string notes
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Prescription {
+        string id PK
+        string consultationRecordId FK
+        string medicationName
+        string dosage
+        string frequency
+        string duration
+        string notes
+        datetime createdAt
+    }
+
+    Notification {
+        string id PK
+        string recipientId FK
+        string type
+        string message
+        boolean isRead
+        datetime createdAt
+    }
 ```
 
 ## Schema
 
 ### User
+
 ```
 id              String    @id @default(cuid())
 email           String    @unique
@@ -34,9 +111,11 @@ role            Role      (PATIENT | DOCTOR)
 createdAt       DateTime
 updatedAt       DateTime
 ```
+
 Central auth record. Thin — profile details live in the role-specific tables.
 
 ### PatientProfile
+
 ```
 id              String
 userId          String    @unique  FK → User
@@ -51,6 +130,7 @@ medicalHistory  String?
 ```
 
 ### DoctorProfile
+
 ```
 id              String
 userId          String    @unique  FK → User
@@ -62,6 +142,7 @@ contactDetails  String?
 ```
 
 ### AvailabilitySlot
+
 ```
 id              String
 doctorId        String    FK → DoctorProfile
@@ -71,6 +152,7 @@ isBlocked       Boolean   @default(false)
 ```
 
 ### Appointment
+
 ```
 id              String
 patientId       String    FK → PatientProfile
@@ -83,6 +165,7 @@ updatedAt       DateTime
 ```
 
 ### ConsultationRecord
+
 ```
 id              String
 appointmentId   String    @unique  FK → Appointment
@@ -92,6 +175,7 @@ updatedAt       DateTime
 ```
 
 ### Prescription
+
 ```
 id              String
 consultationRecordId  String  FK → ConsultationRecord
@@ -104,6 +188,7 @@ createdAt       DateTime
 ```
 
 ### Notification
+
 ```
 id              String
 recipientId     String    FK → User
@@ -124,6 +209,7 @@ The fields for patients (weight, height, medical history) and doctors (bio, spec
 ### AvailabilitySlot as a first-class entity
 
 Availability could have been modeled as a simple schedule config (e.g., "Mondays 9–5"). A first-class `AvailabilitySlot` table was chosen instead because:
+
 - Individual slot blocking is required (not just recurring patterns)
 - Booked slots need to reference a specific slot ID on the Appointment
 - Querying available slots for a date range is a simple `WHERE isBlocked = false AND id NOT IN (booked slots)`

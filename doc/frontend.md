@@ -5,6 +5,7 @@
 ### Why Next.js 14 App Router over Pages Router
 
 The App Router (introduced in Next.js 13, stable in 14) enables React Server Components (RSC). For a data-heavy app like a telehealth dashboard, RSC means:
+
 - Initial page data is fetched server-side before HTML is sent — no loading spinners for primary content
 - Server Components have direct access to environment variables and can call the NestJS API without CORS
 - Layouts, loading states, and error boundaries are co-located with routes via the file system
@@ -53,6 +54,7 @@ Route groups `(auth)` and `dashboard` keep auth pages separate from protected pa
 ## Data Fetching Patterns
 
 ### Server Components (default)
+
 Used for initial page data — doctor listings, appointment history, profile details. Data is fetched directly in the component using `fetch` with the Clerk session token.
 
 ```tsx
@@ -61,19 +63,22 @@ export default async function DoctorsPage() {
   const { getToken } = auth()
   const token = await getToken()
   const doctors = await fetch('/api/doctors', {
-    headers: { Authorization: `Bearer ${token}` }
-  }).then(r => r.json())
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => r.json())
   return <DoctorList doctors={doctors} />
 }
 ```
 
 ### Client Components (`'use client'`)
+
 Used for interactive features: booking forms, slot pickers, the AI symptom input, and anything that uses `useState` or browser APIs.
 
 ### SSE (AI Recommendations)
+
 The symptom input component opens an `EventSource` connection and renders events as they stream in. This must be a Client Component.
 
 ### Socket.io
+
 Initialized once in the root layout's client wrapper. Incoming events update a global notification store (Zustand or React context) that the notification bell reads from.
 
 ---
@@ -89,6 +94,7 @@ Role-based redirects happen at sign-in: the middleware reads `publicMetadata.rol
 ## Why No Separate State Management Library
 
 The app's server-side data is fetched fresh per page load via RSC — no need to cache it in global state. The only global client state is:
+
 - Notification list (Socket.io events) — managed with a small Zustand store or React context
 - Auth session — managed by Clerk
 

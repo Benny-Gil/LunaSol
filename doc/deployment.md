@@ -3,12 +3,14 @@
 ## Decision: Docker + Cloudflare Tunnel
 
 **Why Docker:**
+
 - Reproducible builds — identical environment in dev and production
 - All services (Next.js, NestJS, FastAPI, Postgres, Jitsi, Nginx, pgAdmin) are orchestrated with a single `docker compose` command
 - Easy to restart, update, or replace individual services without touching others
 - `docker-compose.yml` (dev) and `docker-compose.prod.yml` (prod) share service definitions with environment-specific overrides
 
 **Why Cloudflare Tunnel:**
+
 - No need for a public IP or open inbound ports on the server
 - HTTPS is handled automatically by Cloudflare — no cert management needed
 - Built-in DDoS protection and CDN caching
@@ -20,16 +22,16 @@
 
 ## Service Map (Production)
 
-| Service | Image | Network | Exposed |
-|---|---|---|---|
-| `web` | Next.js build | internal | Via Nginx |
-| `api` | NestJS build | internal | Via Nginx `/api` |
-| `ai` | FastAPI + llama-cpp | internal | No |
-| `db` | postgres:16 | internal | No |
-| `pgadmin` | dpage/pgadmin4 | internal | Via Nginx `/pgadmin` |
-| `jitsi` | jitsi stack | internal | Via Nginx `/meet` |
-| `nginx` | nginx:alpine | internal + tunnel | Entry point |
-| `cloudflared` | cloudflare/cloudflared | internal | Tunnel daemon |
+| Service       | Image                  | Network           | Exposed              |
+| ------------- | ---------------------- | ----------------- | -------------------- |
+| `web`         | Next.js build          | internal          | Via Nginx            |
+| `api`         | NestJS build           | internal          | Via Nginx `/api`     |
+| `ai`          | FastAPI + llama-cpp    | internal          | No                   |
+| `db`          | postgres:16            | internal          | No                   |
+| `pgadmin`     | dpage/pgadmin4         | internal          | Via Nginx `/pgadmin` |
+| `jitsi`       | jitsi stack            | internal          | Via Nginx `/meet`    |
+| `nginx`       | nginx:alpine           | internal + tunnel | Entry point          |
+| `cloudflared` | cloudflare/cloudflared | internal          | Tunnel daemon        |
 
 Only `nginx` is the network entry point. All other services communicate on the internal Docker network and are never directly reachable from outside.
 
@@ -98,15 +100,15 @@ Avoids pushing images to a registry. The server builds directly from source on e
 
 All secrets live in `.env.prod` on the server — never in the repository.
 
-| Variable | Used by |
-|---|---|
-| `DATABASE_URL` | NestJS / Prisma |
-| `CLERK_SECRET_KEY` | NestJS auth guard + webhook |
-| `CLERK_WEBHOOK_SECRET` | Webhook signature verification |
-| `JITSI_JWT_SECRET` | Room token signing |
-| `PGADMIN_DEFAULT_EMAIL` | pgAdmin login |
-| `PGADMIN_DEFAULT_PASSWORD` | pgAdmin login |
-| `CLOUDFLARE_TUNNEL_TOKEN` | cloudflared tunnel daemon |
+| Variable                   | Used by                        |
+| -------------------------- | ------------------------------ |
+| `DATABASE_URL`             | NestJS / Prisma                |
+| `CLERK_SECRET_KEY`         | NestJS auth guard + webhook    |
+| `CLERK_WEBHOOK_SECRET`     | Webhook signature verification |
+| `JITSI_JWT_SECRET`         | Room token signing             |
+| `PGADMIN_DEFAULT_EMAIL`    | pgAdmin login                  |
+| `PGADMIN_DEFAULT_PASSWORD` | pgAdmin login                  |
+| `CLOUDFLARE_TUNNEL_TOKEN`  | cloudflared tunnel daemon      |
 
 The server SSH key used by GitHub Actions is stored as a GitHub Actions secret (`SSH_PRIVATE_KEY`). It never touches the repository.
 

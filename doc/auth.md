@@ -3,6 +3,7 @@
 ## Decision: Clerk over custom auth
 
 **Why Clerk:**
+
 - Handles all auth complexity out of the box — registration, login, session management, password reset, MFA
 - Issues JWTs verifiable by the NestJS backend without a shared secret (JWKS endpoint)
 - Supports `publicMetadata` for storing custom claims (role) that appear in every JWT
@@ -42,6 +43,7 @@ Roles are immutable after registration — a user cannot switch roles without cr
 ```
 
 Role is stored in both the database (via the profile table) and Clerk metadata (via `publicMetadata`) so:
+
 - The frontend can read the role from the JWT for routing decisions without an API call
 - The backend can read the role from the JWT claim for access control without a DB lookup
 
@@ -57,11 +59,13 @@ Role is stored in both the database (via the profile table) and Clerk metadata (
 ### API Requests
 
 Every request from the frontend includes:
+
 ```
 Authorization: Bearer <clerk-jwt>
 ```
 
 NestJS `AuthGuard` verifies the JWT on every protected request:
+
 1. Extract the Bearer token from the Authorization header
 2. Fetch Clerk's public JWKS from `https://api.clerk.com/v1/jwks`
 3. Verify the JWT signature and expiry
@@ -74,9 +78,11 @@ NestJS `AuthGuard` verifies the JWT on every protected request:
 Two guards applied in NestJS:
 
 ### AuthGuard
+
 Applied globally via `APP_GUARD`. Rejects any request without a valid Clerk JWT with HTTP 401. Public endpoints (doctor listing, health check) are decorated with `@Public()` to opt out.
 
 ### RoleGuard
+
 Applied per controller or handler via `@Roles('patient')` or `@Roles('doctor')`. Reads `role` from the decoded JWT claims. Returns HTTP 403 if the role does not match.
 
 ```

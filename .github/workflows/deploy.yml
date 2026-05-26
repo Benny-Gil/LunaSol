@@ -1,0 +1,42 @@
+name: Deploy to production
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    name: SSH deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            git pull origin prod
+
+            # Build new images without taking down the running stack
+            docker compose -f docker-compose.prod.yml build
+
+            # Bring up the new images; old containers stay until replaced
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Run migrations against the live DB after new containers are healthy
+            docker compose -f docker-compose.prod.yml exec -T api \
+              npx prisma migrate deploy
+
+            # Clean up dangling images
+            docker image prune -f
