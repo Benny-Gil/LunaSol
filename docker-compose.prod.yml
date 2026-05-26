@@ -64,6 +64,8 @@ services:
     image: nginx:alpine
     container_name: lunasol-prod-nginx
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:80:80"
     volumes:
       - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -79,10 +81,9 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    network_mode: host
     depends_on:
       - nginx
-    networks:
-      - lunasol
 
 volumes:
   postgres_data:
