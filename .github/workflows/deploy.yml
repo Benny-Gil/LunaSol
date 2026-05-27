@@ -22,12 +22,7 @@ jobs:
         run: DOCKER_BUILDKIT=1 docker compose -f docker-compose.prod.yml build
 
       - name: Run migrations
-        run: |
-          docker run --rm \
-            --network lunasol-prod_lunasol \
-            --env-file .env \
-            lunasol-prod-api \
-            /app/node_modules/.bin/prisma migrate deploy
+        run: docker compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy
 
       - name: Start containers
         run: docker compose -f docker-compose.prod.yml up -d --remove-orphans
