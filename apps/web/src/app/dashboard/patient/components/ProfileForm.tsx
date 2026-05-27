@@ -147,7 +147,8 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
 
       router.push('/dashboard/patient')
     } catch (err) {
-      setErrors({ form: err instanceof Error ? err.message : 'Failed to save profile' })
+      console.error('Profile save failed:', err)
+      setErrors({ form: 'Something went wrong. Please try again.' })
     } finally {
       setLoading(false)
     }
