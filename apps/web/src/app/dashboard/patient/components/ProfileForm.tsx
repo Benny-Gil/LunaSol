@@ -71,10 +71,35 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
 
   function validate(): boolean {
     const e: Record<string, string> = {}
+
     if (!profile.name.trim()) e.name = 'Name is required'
-    if (!profile.birthday) e.birthday = 'Birthday is required'
+
+    if (!profile.birthday) {
+      e.birthday = 'Date of birth is required'
+    } else {
+      const d = new Date(profile.birthday)
+      const year = d.getFullYear()
+      const now = new Date()
+      if (isNaN(d.getTime())) {
+        e.birthday = 'Enter a valid date'
+      } else if (year < 1900 || year > now.getFullYear()) {
+        e.birthday = `Year must be between 1900 and ${now.getFullYear()}`
+      } else if (d > now) {
+        e.birthday = 'Date of birth cannot be in the future'
+      }
+    }
+
     if (!profile.weight || profile.weight <= 0) e.weight = 'Enter a valid weight'
     if (!profile.height || profile.height <= 0) e.height = 'Enter a valid height'
+
+    if (profile.phone) {
+      // E.164-ish: + followed by country code (1–3 digits) and subscriber number, total 7–15 digits
+      const phoneRegex = /^\+[1-9]\d{6,14}$/
+      if (!phoneRegex.test(profile.phone.replace(/[\s\-().]/g, ''))) {
+        e.phone = 'Include country code (e.g. +1 555 123 4567). Must be 7–15 digits total.'
+      }
+    }
+
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -240,6 +265,8 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
           <label style={labelStyle}>Date of birth *</label>
           <input
             type="date"
+            min="1900-01-01"
+            max={new Date().toISOString().slice(0, 10)}
             style={{ ...inputStyle, borderColor: errors.birthday ? '#dc2626' : '#d1d5db' }}
             value={profile.birthday}
             onChange={(e) => setProfile((p) => ({ ...p, birthday: e.target.value }))}
@@ -280,11 +307,15 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
           <label style={labelStyle}>Phone</label>
           <input
             type="tel"
-            style={inputStyle}
+            style={{ ...inputStyle, borderColor: errors.phone ? '#dc2626' : '#d1d5db' }}
             value={profile.phone}
             onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
-            placeholder="+1 (555) 123-4567"
+            placeholder="+1 555 123 4567"
           />
+          {errors.phone
+            ? <p style={errorStyle}>{errors.phone}</p>
+            : <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px', marginBottom: 0 }}>Include country code, e.g. +1 555 123 4567</p>
+          }
         </div>
 
         {/* Address */}
