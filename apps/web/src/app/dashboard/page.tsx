@@ -27,6 +27,9 @@ export default async function DashboardRedirectPage() {
       if (!profile.profileComplete) {
         redirect('/dashboard/patient/onboarding')
       }
+    } else if (res.status === 404) {
+      // Webhook hasn't fired yet — user has no DB record, treat as incomplete
+      redirect('/dashboard/patient/onboarding')
     }
   } catch {
     // If API is unreachable, fall through to dashboard

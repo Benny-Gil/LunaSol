@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { createClerkClient } from '@clerk/backend'
 import { PrismaService } from '../prisma/prisma.service'
 import { UpdateProfileDto } from './dto/update-profile.dto'
 
 @Injectable()
 export class PatientsService {
+  private clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY })
+
   constructor(private prisma: PrismaService) {}
 
   async getProfile(clerkId: string) {
@@ -22,15 +25,42 @@ export class PatientsService {
     return { ...profile, profileComplete }
   }
 
-  async updateProfile(clerkId: string, dto: UpdateProfileDto) {
-    const user = await this.prisma.user.findUnique({
+  // Ensures a User + PatientProfile row exists, creating it if the webhook hasn't fired yet.
+  private async ensurePatientRecord(clerkId: string) {
+    let user = await this.prisma.user.findUnique({
       where: { clerkId },
       include: { patient: true },
     })
 
-    if (!user?.patient) {
-      throw new NotFoundException('Patient profile not found')
+    if (!user) {
+      const clerkUser = await this.clerk.users.getUser(clerkId)
+      const email = clerkUser.emailAddresses[0]?.emailAddress ?? ''
+      user = await this.prisma.user.create({
+        data: {
+          clerkId,
+          email,
+          role: 'PATIENT',
+          patient: {
+            create: { name: '', birthday: new Date('1990-01-01'), weight: 0, height: 0 },
+          },
+        },
+        include: { patient: true },
+      })
+    } else if (!user.patient) {
+      await this.prisma.patientProfile.create({
+        data: { userId: user.id, name: '', birthday: new Date('1990-01-01'), weight: 0, height: 0 },
+      })
+      user = await this.prisma.user.findUnique({
+        where: { clerkId },
+        include: { patient: true },
+      })
     }
+
+    return user!
+  }
+
+  async updateProfile(clerkId: string, dto: UpdateProfileDto) {
+    const user = await this.ensurePatientRecord(clerkId)
 
     const data: Record<string, any> = {}
     if (dto.name !== undefined) data.name = dto.name
@@ -42,7 +72,7 @@ export class PatientsService {
     if (dto.medicalHistory !== undefined) data.medicalHistory = dto.medicalHistory
 
     const updated = await this.prisma.patientProfile.update({
-      where: { id: user.patient.id },
+      where: { id: user.patient!.id },
       data,
     })
 
@@ -51,17 +81,10 @@ export class PatientsService {
   }
 
   async updatePicture(clerkId: string, filename: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { clerkId },
-      include: { patient: true },
-    })
-
-    if (!user?.patient) {
-      throw new NotFoundException('Patient profile not found')
-    }
+    const user = await this.ensurePatientRecord(clerkId)
 
     const updated = await this.prisma.patientProfile.update({
-      where: { id: user.patient.id },
+      where: { id: user.patient!.id },
       data: { profilePictureUrl: `/api/uploads/profile-pictures/${filename}` },
     })
 
