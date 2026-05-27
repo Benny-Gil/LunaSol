@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.1",
     "@lunasol/types": "workspace:*",
     "lucide-react": "^1.16.0",
     "next": "14.2.29",
