@@ -34,10 +34,11 @@ COPY packages/types/package.json ./packages/types/
 RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY apps/api/prisma ./apps/api/prisma
 COPY packages/types ./packages/types
 
 WORKDIR /app/apps/api
 
 EXPOSE 3001
-CMD ["sh", "-c", "/app/node_modules/.bin/prisma generate && node dist/main"]
+CMD ["node", "dist/main"]
