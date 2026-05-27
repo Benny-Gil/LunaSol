@@ -22,7 +22,7 @@ export class RoleGuard implements CanActivate {
       throw new ForbiddenException('Access denied: user role not verified')
     }
 
-    const hasRole = requiredRoles.includes(user.role)
+    const hasRole = requiredRoles.some(r => r.toLowerCase() === user.role?.toLowerCase())
     if (!hasRole) {
       throw new ForbiddenException(`Access denied: required role is one of [${requiredRoles.join(', ')}]`)
     }

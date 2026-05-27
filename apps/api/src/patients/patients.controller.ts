@@ -30,7 +30,7 @@ const profilePictureStorage = diskStorage({
 })
 
 @Controller('patients')
-@Roles('PATIENT')
+@Roles('patient')
 export class PatientsController {
   constructor(private patientsService: PatientsService) {}
 
