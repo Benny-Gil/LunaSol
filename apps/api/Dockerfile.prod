@@ -43,4 +43,4 @@ COPY packages/types ./packages/types
 WORKDIR /app/apps/api
 
 EXPOSE 3001
-CMD ["sh", "-c", "node_modules/.bin/prisma generate && node_modules/.bin/prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "/app/node_modules/.bin/prisma generate && /app/node_modules/.bin/prisma migrate deploy && node dist/main"]
