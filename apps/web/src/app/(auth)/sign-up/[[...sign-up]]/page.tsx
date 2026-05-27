@@ -29,8 +29,9 @@ export default function SignUpPage() {
       })
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
       setPendingVerification(true)
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'An error occurred during sign up.')
+    } catch (err) {
+      const errorObject = err as any
+      setError(errorObject.errors?.[0]?.message || 'An error occurred during sign up.')
     } finally {
       setLoading(false)
     }
@@ -48,8 +49,9 @@ export default function SignUpPage() {
       } else {
         setError('Verification failed. Please try again.')
       }
-    } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Verification failed. Please try again.')
+    } catch (err) {
+      const errorObject = err as any
+      setError(errorObject.errors?.[0]?.message || 'Verification failed. Please try again.')
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,6 @@
 import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
-import { Video, Bot, FolderOpen, Bell, Calendar, User } from 'lucide-react'
+import { Video, Bot, FolderOpen, Calendar } from 'lucide-react'
 
 export default async function PatientDashboard() {
   const user = await currentUser()
