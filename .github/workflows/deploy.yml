@@ -15,6 +15,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Load env
+        run: cp /opt/lunasol/.env .env
+
       - name: Build images
         run: docker compose -f docker-compose.prod.yml build
 
