@@ -9,7 +9,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
@@ -30,7 +31,8 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
 
-RUN pnpm install --frozen-lockfile --prod
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --prod
 
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY packages/types ./packages/types

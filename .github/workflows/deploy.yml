@@ -15,14 +15,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Load env
+        run: cp /opt/lunasol/.env .env
+
       - name: Build images
-        run: docker compose -f docker-compose.prod.yml build
+        run: DOCKER_BUILDKIT=1 docker compose -f docker-compose.prod.yml build
+
+      - name: Run migrations
+        run: docker compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy
 
       - name: Start containers
         run: docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-      - name: Run migrations
-        run: docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
+      - name: Verify deployment
+        run: |
+          for i in $(seq 1 30); do
+            status=$(docker inspect lunasol-prod-api --format '{{.State.Health.Status}}' 2>/dev/null)
+            [ "$status" = "healthy" ] && echo "API is healthy" && exit 0
+            echo "[$i/30] status=$status, waiting 3s..."
+            sleep 3
+          done
+          echo "Timed out waiting for API. Last 50 log lines:"
+          docker logs lunasol-prod-api --tail 50
+          exit 1
 
       - name: Prune old images
         run: docker image prune -f
