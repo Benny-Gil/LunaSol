@@ -23,10 +23,9 @@ jobs:
 
       - name: Run migrations
         run: |
-          source .env
           docker run --rm \
             --network lunasol-prod_lunasol \
-            --env DATABASE_URL \
+            --env-file .env \
             lunasol-prod-api \
             /app/node_modules/.bin/prisma migrate deploy
 
