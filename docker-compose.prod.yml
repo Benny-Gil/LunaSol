@@ -5,11 +5,13 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.prod
+      args:
+        - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     container_name: lunasol-prod-web
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - INTERNAL_API_URL=http://api:3001
     depends_on:
       api:
         condition: service_healthy
@@ -27,6 +29,8 @@ services:
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
       - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
       - NODE_ENV=production
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -109,6 +113,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   lunasol:
