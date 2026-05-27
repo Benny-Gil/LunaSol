@@ -1,4 +1,5 @@
 import { Video, Bot, FolderOpen, Bell, ArrowRight } from 'lucide-react'
+import { Show, UserButton, SignInButton, SignUpButton } from '@clerk/nextjs'
 
 export default function Home() {
   return (
@@ -13,12 +14,24 @@ export default function Home() {
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>Features</a>
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>About</a>
           <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>Contact</a>
-          <button disabled style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#9ca3af', padding: '8px 20px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '14px', fontWeight: 500, opacity: 0.6 }}>
-            Sign in
-          </button>
-          <button disabled style={{ background: '#9ca3af', border: 'none', color: '#ffffff', padding: '8px 20px', borderRadius: '8px', cursor: 'not-allowed', fontSize: '14px', fontWeight: 500 }}>
-            Get started
-          </button>
+          <Show when="signed-out">
+            <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
+              <button style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#111827', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+                Sign in
+              </button>
+            </SignInButton>
+            <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
+              <button style={{ background: '#111827', border: 'none', color: '#ffffff', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+                Get started
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <a href="/dashboard" style={{ color: '#111827', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>
+              Dashboard
+            </a>
+            <UserButton />
+          </Show>
         </div>
       </nav>
 
@@ -34,10 +47,19 @@ export default function Home() {
           Connect with your care team, track your health, and manage appointments — all in one place.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button disabled style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#9ca3af', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'not-allowed' }}>
-            Get started <ArrowRight size={16} />
-          </button>
-          <button disabled style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#9ca3af', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 500, cursor: 'not-allowed', opacity: 0.6 }}>
+          <Show when="signed-out">
+            <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
+              <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}>
+                Get started <ArrowRight size={16} />
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 600, textDecoration: 'none' }}>
+              Go to Dashboard <ArrowRight size={16} />
+            </a>
+          </Show>
+          <button style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#111827', padding: '13px 28px', borderRadius: '8px', fontSize: '15px', fontWeight: 500, cursor: 'pointer' }}>
             Learn more
           </button>
         </div>
@@ -71,9 +93,18 @@ export default function Home() {
           Ready to take control of your health?
         </h2>
         <p style={{ color: '#6b7280', marginBottom: '32px', fontSize: '16px' }}>Join thousands already on LunaSol.</p>
-        <button disabled style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#9ca3af', border: 'none', color: '#fff', padding: '14px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'not-allowed' }}>
-          Create free account <ArrowRight size={16} />
-        </button>
+        <Show when="signed-out">
+          <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
+            <button style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '14px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'pointer' }}>
+              Create free account <ArrowRight size={16} />
+            </button>
+          </SignUpButton>
+        </Show>
+        <Show when="signed-in">
+          <a href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#111827', border: 'none', color: '#fff', padding: '14px 32px', borderRadius: '8px', fontSize: '16px', fontWeight: 600, textDecoration: 'none' }}>
+            Go to Dashboard <ArrowRight size={16} />
+          </a>
+        </Show>
       </section>
 
       {/* Footer */}
