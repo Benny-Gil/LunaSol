@@ -19,7 +19,7 @@ jobs:
         run: cp /opt/lunasol/.env .env
 
       - name: Build images
-        run: docker compose -f docker-compose.prod.yml build
+        run: DOCKER_BUILDKIT=1 docker compose -f docker-compose.prod.yml build
 
       - name: Run migrations
         run: |
