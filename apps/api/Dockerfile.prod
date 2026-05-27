@@ -19,28 +19,23 @@ WORKDIR /app/apps/api
 RUN /app/node_modules/.bin/prisma generate
 RUN pnpm build
 
+# pnpm deploy creates a flat node_modules (no virtual store) — Prisma-safe
+WORKDIR /app
+RUN pnpm deploy --filter @lunasol/api --prod --legacy /app/deploy
+
 FROM node:22-alpine AS runner
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-ENV PNPM_CONFIG_TRUST_LOCKFILE=true
 ENV NODE_ENV=production
-
 WORKDIR /app
 
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/types/package.json ./packages/types/
+# Flat node_modules from pnpm deploy (standard structure, prisma can resolve deps)
+COPY --from=builder /app/deploy/node_modules ./node_modules
 
-RUN pnpm install --frozen-lockfile --prod
+COPY --from=builder /app/apps/api/dist ./dist
+COPY apps/api/prisma ./prisma
+COPY apps/api/prisma.config.ts ./prisma.config.ts
 
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY apps/api/prisma ./apps/api/prisma
-COPY apps/api/prisma.config.ts ./apps/api/prisma.config.ts
-COPY packages/types ./packages/types
-
-WORKDIR /app/apps/api
+RUN node_modules/.bin/prisma generate
 
 EXPOSE 3001
-CMD ["sh", "-c", "/app/node_modules/.bin/prisma generate && /app/node_modules/.bin/prisma migrate deploy && node dist/main"]
+CMD ["node", "dist/main"]
