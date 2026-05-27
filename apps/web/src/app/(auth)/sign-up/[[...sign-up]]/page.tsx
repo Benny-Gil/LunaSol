@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function SignUpPage() {
-  const { isLoaded, signUp, setActive } = useSignUp()
+  const { signUp } = useSignUp()
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<'patient' | 'doctor'>('patient')
@@ -15,6 +15,7 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const isLoaded = signUp !== undefined && signUp !== null
   if (!isLoaded) return null
 
   async function handleSubmit(e: React.FormEvent) {
@@ -22,16 +23,25 @@ export default function SignUpPage() {
     setError('')
     setLoading(true)
     try {
-      await signUp.create({
+      const createRes = await signUp.create({
         emailAddress,
         password,
         unsafeMetadata: { role },
       })
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
+      if (createRes.error) {
+        setError(createRes.error.message || 'An error occurred during sign up.')
+        return
+      }
+      
+      const sendRes = await signUp.verifications.sendEmailCode()
+      if (sendRes.error) {
+        setError(sendRes.error.message || 'Failed to send verification code.')
+        return
+      }
       setPendingVerification(true)
     } catch (err) {
       const errorObject = err as any
-      setError(errorObject.errors?.[0]?.message || 'An error occurred during sign up.')
+      setError(errorObject.message || 'An error occurred during sign up.')
     } finally {
       setLoading(false)
     }
@@ -42,16 +52,25 @@ export default function SignUpPage() {
     setError('')
     setLoading(true)
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({ code })
-      if (completeSignUp.status === 'complete') {
-        await setActive({ session: completeSignUp.createdSessionId })
+      const verifyRes = await signUp.verifications.verifyEmailCode({ code })
+      if (verifyRes.error) {
+        setError(verifyRes.error.message || 'Verification failed. Please try again.')
+        return
+      }
+      
+      if (signUp.status === 'complete') {
+        const finalizeRes = await signUp.finalize()
+        if (finalizeRes.error) {
+          setError(finalizeRes.error.message || 'Failed to finalize sign up.')
+          return
+        }
         router.push('/dashboard')
       } else {
         setError('Verification failed. Please try again.')
       }
     } catch (err) {
       const errorObject = err as any
-      setError(errorObject.errors?.[0]?.message || 'Verification failed. Please try again.')
+      setError(errorObject.message || 'Verification failed. Please try again.')
     } finally {
       setLoading(false)
     }
