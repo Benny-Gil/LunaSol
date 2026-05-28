@@ -64,9 +64,16 @@ export default function DoctorProfileForm({ mode }: { mode: 'onboarding' | 'edit
     return Object.keys(e).length === 0
   }
 
+  useEffect(() => {
+    return () => {
+      if (picturePreview) URL.revokeObjectURL(picturePreview)
+    }
+  }, [picturePreview])
+
   function handlePictureChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (picturePreview) URL.revokeObjectURL(picturePreview)
     setPictureFile(file)
     setPicturePreview(URL.createObjectURL(file))
   }
