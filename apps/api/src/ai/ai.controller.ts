@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Sse, MessageEvent, BadRequestException } from '@nestjs/common'
+import { Controller, Query, Sse, MessageEvent, BadRequestException } from '@nestjs/common'
 import { Observable } from 'rxjs'
 import { Public } from '../auth/decorators/public.decorator'
 import { DoctorsService } from '../doctors/doctors.service'
@@ -25,7 +25,7 @@ export class AiController {
     if (history && history.trim().length > 0) {
       try {
         messages = JSON.parse(history)
-      } catch (err) {
+      } catch {
         throw new BadRequestException('Invalid JSON format in "history" parameter')
       }
     } else if (q) {
@@ -76,6 +76,7 @@ export class AiController {
           const decoder = new TextDecoder()
           let buffer = ''
 
+          // eslint-disable-next-line no-constant-condition
           while (true) {
             const { value, done } = await reader.read()
             if (done) break
@@ -175,7 +176,7 @@ export class AiController {
 
             // Sort by score descending
             const sortedDocs = mappedDocs.sort((a, b) => b.score - a.score)
-            const fallbackList = sortedDocs.map(({ score, ...rest }) => rest)
+            const fallbackList = sortedDocs.map(({ score: _score, ...rest }) => rest)
 
             subscriber.next({ type: 'doctors', data: JSON.stringify(fallbackList) })
           } catch (fallbackError) {

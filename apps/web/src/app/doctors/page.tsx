@@ -265,14 +265,6 @@ export default function DoctorsPage() {
     setSymptomsQuery(text)
   }
 
-  // Detect if there is a severe emergency notice in the streaming reasoning text or messages list
-  const isEmergencyNotice = messages.some(msg => 
-    msg.role === 'assistant' && (
-      msg.content.toLowerCase().includes('emergency notice') || 
-      msg.content.toLowerCase().includes('life-threatening') ||
-      msg.content.toLowerCase().includes('call 911')
-    )
-  ) || reasoning.toLowerCase().includes('emergency notice')
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#f8fafc', minHeight: '100vh', color: '#0f172a' }}>
