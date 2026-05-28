@@ -9,7 +9,7 @@ import { useNotifications } from '@/lib/useNotifications'
 export default function NotificationBell() {
   const router = useRouter()
   const { user } = useUser()
-  const role = (user?.publicMetadata?.role as string) ?? 'patient'
+  const role = (user?.publicMetadata?.role as string) || 'patient'
   const { notifications, unreadCount, markRead } = useNotifications()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)

@@ -31,19 +31,22 @@ export function useNotifications() {
   )
 
   useEffect(() => {
+    let cancelled = false
     let socket: Socket | null = null
 
     async function init() {
       const token = await getToken()
-      if (!token) return
+      if (cancelled || !token) return
 
       // Fetch notification history
       try {
         const history: Notification[] = await apiFetch('/notifications', { token })
-        setNotifications(history)
+        if (!cancelled) setNotifications(history)
       } catch {
         // Not critical — live events still work
       }
+
+      if (cancelled) return
 
       // Connect Socket.io through Nginx at /api/socket.io
       socket = io('', {
@@ -67,6 +70,7 @@ export function useNotifications() {
     init()
 
     return () => {
+      cancelled = true
       socket?.disconnect()
     }
   }, [getToken])
