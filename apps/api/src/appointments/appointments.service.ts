@@ -34,46 +34,51 @@ export class AppointmentsService {
   }
 
   private async createNotification(recipientId: string, type: string, message: string) {
+    // TODO: emit real-time event via NotificationsService once #9 (Socket.io gateway) lands
     await this.prisma.notification.create({
       data: { recipientId, type, message },
     })
   }
 
   async book(clerkId: string, dto: BookAppointmentDto) {
-    const { user: patientUser, patient } = await this.getPatientProfile(clerkId)
+    const { patient } = await this.getPatientProfile(clerkId)
 
-    const slot = await this.prisma.availabilitySlot.findUnique({
-      where: { id: dto.slotId },
-      include: { appointment: true, doctor: { include: { user: true } } },
-    })
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const slot = await tx.availabilitySlot.findUnique({
+          where: { id: dto.slotId },
+          include: { appointment: true, doctor: { include: { user: true } } },
+        })
 
-    if (!slot) throw new NotFoundException('Slot not found')
-    if (slot.isBlocked) throw new ConflictException('Slot is blocked')
-    if (slot.appointment) throw new ConflictException('Slot is already booked')
-    if (slot.startTime <= new Date()) throw new BadRequestException('Slot is in the past')
+        if (!slot) throw new NotFoundException('Slot not found')
+        if (slot.isBlocked) throw new ConflictException('Slot is blocked')
+        if (slot.appointment) throw new ConflictException('Slot is already booked')
+        if (slot.startTime <= new Date()) throw new BadRequestException('Slot is in the past')
 
-    const appointment = await this.prisma.appointment.create({
-      data: {
-        patientId: patient.id,
-        doctorId: slot.doctorId,
-        slotId: slot.id,
-        status: AppointmentStatus.PENDING,
-      },
-      include: {
-        slot: true,
-        doctor: true,
-        patient: true,
-      },
-    })
+        const appointment = await tx.appointment.create({
+          data: {
+            patientId: patient.id,
+            doctorId: slot.doctorId,
+            slotId: slot.id,
+            status: AppointmentStatus.PENDING,
+          },
+          include: { slot: true, doctor: true, patient: true },
+        })
 
-    // Notify doctor of new appointment request
-    await this.createNotification(
-      slot.doctor.user.id,
-      'APPOINTMENT_REQUEST',
-      `New appointment request from ${patient.name} on ${slot.startTime.toLocaleDateString()}`,
-    )
+        await tx.notification.create({
+          data: {
+            recipientId: slot.doctor.user.id,
+            type: 'APPOINTMENT_REQUEST',
+            message: `New appointment request from ${patient.name} on ${slot.startTime.toLocaleDateString()}`,
+          },
+        })
 
-    return appointment
+        return appointment
+      })
+    } catch (e: any) {
+      if (e?.code === 'P2002') throw new ConflictException('Slot is already booked')
+      throw e
+    }
   }
 
   async listMine(clerkId: string, role: string) {
@@ -89,7 +94,7 @@ export class AppointmentsService {
     const { patient } = await this.getPatientProfile(clerkId)
     return this.prisma.appointment.findMany({
       where: { patientId: patient.id },
-      include: { slot: true, doctor: true },
+      include: { slot: true, doctor: true, record: { include: { prescriptions: true } } },
       orderBy: { slot: { startTime: 'asc' } },
     })
   }
@@ -140,30 +145,39 @@ export class AppointmentsService {
       throw new ConflictException(`Cannot reschedule a ${appointment.status.toLowerCase()} appointment`)
     }
 
-    const newSlot = await this.prisma.availabilitySlot.findUnique({
-      where: { id: dto.newSlotId },
-      include: { appointment: true },
-    })
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const newSlot = await tx.availabilitySlot.findUnique({
+          where: { id: dto.newSlotId },
+          include: { appointment: true },
+        })
 
-    if (!newSlot) throw new NotFoundException('New slot not found')
-    if (newSlot.doctorId !== appointment.doctorId) throw new BadRequestException('Slot belongs to a different doctor')
-    if (newSlot.isBlocked) throw new ConflictException('New slot is blocked')
-    if (newSlot.appointment) throw new ConflictException('New slot is already booked')
-    if (newSlot.startTime <= new Date()) throw new BadRequestException('New slot is in the past')
+        if (!newSlot) throw new NotFoundException('New slot not found')
+        if (newSlot.doctorId !== appointment.doctorId) throw new BadRequestException('Slot belongs to a different doctor')
+        if (newSlot.isBlocked) throw new ConflictException('New slot is blocked')
+        if (newSlot.appointment) throw new ConflictException('New slot is already booked')
+        if (newSlot.startTime <= new Date()) throw new BadRequestException('New slot is in the past')
 
-    const updated = await this.prisma.appointment.update({
-      where: { id },
-      data: { slotId: dto.newSlotId },
-      include: { slot: true, doctor: true },
-    })
+        const updated = await tx.appointment.update({
+          where: { id },
+          data: { slotId: dto.newSlotId },
+          include: { slot: true, doctor: true },
+        })
 
-    await this.createNotification(
-      appointment.doctor.user.id,
-      'APPOINTMENT_RESCHEDULED',
-      `${patient.name} rescheduled their appointment to ${newSlot.startTime.toLocaleDateString()}`,
-    )
+        await tx.notification.create({
+          data: {
+            recipientId: appointment.doctor.user.id,
+            type: 'APPOINTMENT_RESCHEDULED',
+            message: `${patient.name} rescheduled their appointment to ${newSlot.startTime.toLocaleDateString()}`,
+          },
+        })
 
-    return updated
+        return updated
+      })
+    } catch (e: any) {
+      if (e?.code === 'P2002') throw new ConflictException('New slot is already booked')
+      throw e
+    }
   }
 
   async confirm(clerkId: string, id: string) {

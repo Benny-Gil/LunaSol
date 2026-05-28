@@ -25,7 +25,7 @@ export default async function DashboardRedirectPage() {
       if (res.ok) {
         const profile = await res.json()
         if (!profile.profileComplete) redirect('/dashboard/doctor/onboarding')
-      } else if (res.status === 404 || res.status === 401) {
+      } else if (res.status === 404 || res.status === 401 || res.status === 403) {
         redirect('/dashboard/doctor/onboarding')
       }
     } catch (e) {
@@ -47,7 +47,7 @@ export default async function DashboardRedirectPage() {
       if (!profile.profileComplete) {
         redirect('/dashboard/patient/onboarding')
       }
-    } else if (res.status === 404 || res.status === 401) {
+    } else if (res.status === 404 || res.status === 401 || res.status === 403) {
       redirect('/dashboard/patient/onboarding')
     }
   } catch (e) {
