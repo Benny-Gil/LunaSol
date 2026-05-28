@@ -38,15 +38,20 @@ export class AppointmentsService {
   }
 
   private async createNotification(recipientId: string, type: string, message: string) {
-    await this.prisma.notification.create({ data: { recipientId, type, message } })
-    this.notifications.emitToUser(recipientId, 'notification', { type, message })
+    const notification = await this.prisma.notification.create({ data: { recipientId, type, message } })
+    this.notifications.emitToUser(recipientId, 'notification', {
+      id: notification.id,
+      type,
+      message,
+      createdAt: notification.createdAt,
+    })
   }
 
   async book(clerkId: string, dto: BookAppointmentDto) {
     const { patient } = await this.getPatientProfile(clerkId)
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const { appointment, notification } = await this.prisma.$transaction(async (tx) => {
         const slot = await tx.availabilitySlot.findUnique({
           where: { id: dto.slotId },
           include: { appointment: true, doctor: { include: { user: true } } },
@@ -67,7 +72,7 @@ export class AppointmentsService {
           include: { slot: true, doctor: true, patient: true },
         })
 
-        await tx.notification.create({
+        const notification = await tx.notification.create({
           data: {
             recipientId: slot.doctor.user.id,
             type: 'APPOINTMENT_REQUEST',
@@ -75,8 +80,17 @@ export class AppointmentsService {
           },
         })
 
-        return appointment
+        return { appointment, notification }
       })
+
+      this.notifications.emitToUser(notification.recipientId, 'notification', {
+        id: notification.id,
+        type: notification.type,
+        message: notification.message,
+        createdAt: notification.createdAt,
+      })
+
+      return appointment
     } catch (e: any) {
       if (e?.code === 'P2002') throw new ConflictException('Slot is already booked')
       throw e
@@ -148,7 +162,7 @@ export class AppointmentsService {
     }
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const { updated, notification } = await this.prisma.$transaction(async (tx) => {
         const newSlot = await tx.availabilitySlot.findUnique({
           where: { id: dto.newSlotId },
           include: { appointment: true },
@@ -166,7 +180,7 @@ export class AppointmentsService {
           include: { slot: true, doctor: true },
         })
 
-        await tx.notification.create({
+        const notification = await tx.notification.create({
           data: {
             recipientId: appointment.doctor.user.id,
             type: 'APPOINTMENT_RESCHEDULED',
@@ -174,8 +188,17 @@ export class AppointmentsService {
           },
         })
 
-        return updated
+        return { updated, notification }
       })
+
+      this.notifications.emitToUser(notification.recipientId, 'notification', {
+        id: notification.id,
+        type: notification.type,
+        message: notification.message,
+        createdAt: notification.createdAt,
+      })
+
+      return updated
     } catch (e: any) {
       if (e?.code === 'P2002') throw new ConflictException('New slot is already booked')
       throw e

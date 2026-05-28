@@ -8,10 +8,10 @@ import { Server, Socket } from 'socket.io'
 import { verifyToken } from '@clerk/backend'
 import { PrismaService } from '../prisma/prisma.service'
 
-@WebSocketGateway({ cors: { origin: '*' }, path: '/socket.io' })
+@WebSocketGateway({ cors: { origin: '*' }, path: '/api/socket.io' })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server
+  server!: Server
 
   constructor(private prisma: PrismaService) {}
 
