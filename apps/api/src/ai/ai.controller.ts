@@ -124,23 +124,24 @@ export class AiController {
           try {
             const dbDoctors = await this.doctorsService.listDoctors()
             const queryLower = userTexts.toLowerCase()
+            const tokens = queryLower.split(/[^a-zA-Z]+/g).filter(t => t.length > 2)
 
             const SPECIALIZATION_KEYWORDS: Record<string, string[]> = {
-              cardiology: ['chest', 'heart', 'palpitation', 'pressure', 'cardio', 'pulse', 'bp', 'cardiac', 'angina'],
-              dermatology: ['skin', 'rash', 'itch', 'acne', 'eczema', 'dermatitis', 'lesion', 'spot', 'hives', 'burn', 'mole'],
-              neurology: ['headache', 'migraine', 'brain', 'nerve', 'numb', 'tingle', 'dizzy', 'vertigo', 'seizure', 'paralysis'],
-              orthopedics: ['bone', 'joint', 'muscle', 'fracture', 'sprain', 'knee', 'shoulder', 'back', 'spine', 'hip', 'pain', 'arthritis'],
-              pediatrics: ['child', 'baby', 'toddler', 'kid', 'infant', 'pediatric', 'pediatrics'],
-              psychiatry: ['anxiety', 'depression', 'mood', 'mental', 'panic', 'stress', 'sleep', 'bipolar', 'psych', 'sad', 'fear'],
-              'family medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine'],
-              'general medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine']
+              cardiology: ['chest', 'heart', 'palpitation', 'pressure', 'cardio', 'pulse', 'bp', 'cardiac', 'angina', 'artery', 'vein', 'hypertension', 'arrhythmia', 'valve', 'murmur', 'bypass', 'cardiovascular'],
+              dermatology: ['skin', 'rash', 'itch', 'acne', 'eczema', 'dermatitis', 'lesion', 'spot', 'hives', 'burn', 'mole', 'wrinkle', 'dermal', 'psoriasis', 'blister', 'wart', 'allergy'],
+              neurology: ['headache', 'migraine', 'brain', 'nerve', 'numb', 'tingle', 'dizzy', 'vertigo', 'seizure', 'paralysis', 'stroke', 'coma', 'tremor', 'neuropathic', 'spinal', 'concussion', 'neuralgia'],
+              orthopedics: ['bone', 'joint', 'muscle', 'fracture', 'sprain', 'knee', 'shoulder', 'back', 'spine', 'hip', 'pain', 'arthritis', 'tendon', 'ligament', 'scoliosis', 'skeletal', 'cartilage', 'disc'],
+              pediatrics: ['child', 'baby', 'toddler', 'kid', 'infant', 'pediatric', 'pediatrics', 'pediatrician', 'vaccine', 'adolescent', 'growth', 'newborn'],
+              psychiatry: ['anxiety', 'depression', 'mood', 'mental', 'panic', 'stress', 'sleep', 'bipolar', 'psych', 'sad', 'fear', 'schizophrenia', 'adhd', 'psychological', 'trauma', 'hallucination'],
+              'family medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness'],
+              'general medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness']
             }
 
             const scores = new Map<string, number>()
             for (const [spec, keywords] of Object.entries(SPECIALIZATION_KEYWORDS)) {
               let score = 0
               for (const kw of keywords) {
-                if (queryLower.includes(kw)) {
+                if (matchesKeyword(queryLower, tokens, kw)) {
                   score += 1
                 }
               }
@@ -153,9 +154,13 @@ export class AiController {
             const mappedDocs = dbDoctors.map(doc => {
               const specLower = doc.specialization.toLowerCase()
               const score = scores.get(specLower) || 0
-              let reason = 'General practitioner recommended for initial symptom consultation (AI mapping offline).'
+              let reason = ''
               if (score > 0) {
-                reason = `Recommended via fuzzy match: your symptom description aligns with their ${doc.specialization} specialization keywords.`
+                reason = `Recommended via fuzzy match: your symptoms align with their ${doc.specialization} specialization.`
+              } else if (specLower.includes('general') || specLower.includes('family')) {
+                reason = 'General practitioner recommended for initial symptom consultation (AI mapping offline).'
+              } else {
+                reason = `Available specialist: ${doc.specialization} (AI mapping offline).`
               }
               return {
                 id: doc.id,
@@ -207,3 +212,73 @@ export class AiController {
     return enriched
   }
 }
+
+function getLevenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = Array.from({ length: a.length + 1 }, () => 
+    new Array<number>(b.length + 1).fill(0)
+  )
+
+  for (let i = 0; i <= a.length; i++) {
+    const row = matrix[i]
+    if (row) row[0] = i
+  }
+  for (let j = 0; j <= b.length; j++) {
+    const row = matrix[0]
+    if (row) row[j] = j
+  }
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const row = matrix[i]
+      const prevRow = matrix[i - 1]
+      if (row && prevRow) {
+        if (a[i - 1] === b[j - 1]) {
+          row[j] = prevRow[j - 1] ?? 0
+        } else {
+          row[j] = Math.min(
+            (prevRow[j] ?? 0) + 1,    // deletion
+            (row[j - 1] ?? 0) + 1,    // insertion
+            (prevRow[j - 1] ?? 0) + 1 // substitution
+          )
+        }
+      }
+    }
+  }
+  const lastRow = matrix[a.length]
+  return lastRow ? (lastRow[b.length] ?? 0) : 0
+}
+
+function isFuzzyMatch(word: string, keyword: string): boolean {
+  const w = word.toLowerCase()
+  const kw = keyword.toLowerCase()
+
+  if (w.includes(kw) || kw.includes(w)) {
+    return true
+  }
+
+  if (w.length < 3 || kw.length < 3) {
+    return false
+  }
+
+  const maxDistance = kw.length <= 4 ? 1 : 2
+  const distance = getLevenshteinDistance(w, kw)
+  return distance <= maxDistance
+}
+
+function matchesKeyword(queryLower: string, tokens: string[], keyword: string): boolean {
+  const kw = keyword.toLowerCase()
+
+  if (queryLower.includes(kw)) {
+    return true
+  }
+
+  if (kw.includes(' ')) {
+    const subKws = kw.split(' ')
+    return subKws.every(subKw => 
+      tokens.some(token => isFuzzyMatch(token, subKw))
+    )
+  }
+
+  return tokens.some(token => isFuzzyMatch(token, kw))
+}
+
