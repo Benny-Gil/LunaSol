@@ -5,6 +5,7 @@ import {
   Post,
   Body,
   Req,
+  Param,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -15,8 +16,9 @@ import { diskStorage } from 'multer'
 import { mkdirSync } from 'fs'
 import { extname, join } from 'path'
 import { Roles } from '../auth/decorators/roles.decorator'
-import { PatientsService } from './patients.service'
-import { UpdateProfileDto } from './dto/update-profile.dto'
+import { Public } from '../auth/decorators/public.decorator'
+import { DoctorsService } from './doctors.service'
+import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto'
 
 const uploadDir = join(process.cwd(), 'uploads', 'profile-pictures')
 
@@ -29,25 +31,33 @@ const profilePictureStorage = diskStorage({
   },
 })
 
-@Controller('patients')
-@Roles('patient')
-export class PatientsController implements OnModuleInit {
-  constructor(private patientsService: PatientsService) {}
+@Controller('doctors')
+export class DoctorsController implements OnModuleInit {
+  constructor(private doctorsService: DoctorsService) {}
 
   onModuleInit() {
     mkdirSync(uploadDir, { recursive: true })
   }
 
+  @Public()
+  @Get()
+  async listDoctors() {
+    return this.doctorsService.listDoctors()
+  }
+
+  @Roles('doctor')
   @Get('me')
   async getProfile(@Req() req: any) {
-    return this.patientsService.getProfile(req.user.id)
+    return this.doctorsService.getProfile(req.user.id)
   }
 
+  @Roles('doctor')
   @Patch('me')
-  async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
-    return this.patientsService.updateProfile(req.user.id, dto)
+  async updateProfile(@Req() req: any, @Body() dto: UpdateDoctorProfileDto) {
+    return this.doctorsService.updateProfile(req.user.id, dto)
   }
 
+  @Roles('doctor')
   @Post('me/picture')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -66,6 +76,12 @@ export class PatientsController implements OnModuleInit {
     if (!file) {
       throw new BadRequestException('No file uploaded')
     }
-    return this.patientsService.updatePicture(req.user.id, file.filename)
+    return this.doctorsService.updatePicture(req.user.id, file.filename)
+  }
+
+  @Public()
+  @Get(':id')
+  async getDoctorById(@Param('id') id: string) {
+    return this.doctorsService.getDoctorById(id)
   }
 }
