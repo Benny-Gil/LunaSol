@@ -46,6 +46,12 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   const [fetching, setFetching] = useState(true)
 
   useEffect(() => {
+    return () => {
+      if (picturePreview) URL.revokeObjectURL(picturePreview)
+    }
+  }, [picturePreview])
+
+  useEffect(() => {
     async function load() {
       try {
         const token = await getToken()
@@ -107,6 +113,7 @@ export default function ProfileForm({ mode }: { mode: 'onboarding' | 'edit' }) {
   function handlePictureChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (picturePreview) URL.revokeObjectURL(picturePreview)
     setPictureFile(file)
     setPicturePreview(URL.createObjectURL(file))
   }

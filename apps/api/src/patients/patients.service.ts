@@ -46,6 +46,9 @@ export class PatientsService {
         },
         include: { patient: true },
       })
+      await this.clerk.users.updateUserMetadata(clerkId, {
+        publicMetadata: { role: 'patient' },
+      })
     } else if (!user.patient) {
       await this.prisma.patientProfile.create({
         data: { userId: user.id, name: '', birthday: new Date('1990-01-01'), weight: 0, height: 0 },

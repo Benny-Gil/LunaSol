@@ -19,9 +19,9 @@ export default async function PatientDashboard() {
           </span>
         </div>
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Find Doctors</a>
-          <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Appointments</a>
-          <a href="#" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Records</a>
+          <a href="/doctors" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Find Doctors</a>
+          <a href="/dashboard/patient/appointments" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Appointments</a>
+          <a href="/dashboard/patient/records" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Records</a>
           <a href="/dashboard/patient/profile" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Profile</a>
           <UserButton />
         </div>
@@ -42,11 +42,11 @@ export default async function PatientDashboard() {
         {/* Quick Stats / Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>
           {[
-            { Icon: Video, title: 'Virtual Consultations', desc: 'Join or schedule a video call with a practitioner.', count: 'No active calls' },
-            { Icon: Calendar, title: 'Appointments', desc: 'View, reschedule, or book a doctor appointment.', count: '0 upcoming' },
-            { Icon: FolderOpen, title: 'Medical Records', desc: 'Securely access prescriptions and test results.', count: 'Updated recently' },
-          ].map(({ Icon, title, desc, count }) => (
-            <div key={title} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
+            { Icon: Video, title: 'Virtual Consultations', href: '/dashboard/patient/appointments', desc: 'Join or schedule a video call with a practitioner.', count: 'No active calls' },
+            { Icon: Calendar, title: 'Appointments', href: '/dashboard/patient/appointments', desc: 'View, reschedule, or book a doctor appointment.', count: '0 upcoming' },
+            { Icon: FolderOpen, title: 'Medical Records', href: '/dashboard/patient/records', desc: 'Securely access prescriptions and test results.', count: 'Updated recently' },
+          ].map(({ Icon, title, href, desc, count }) => (
+            <a key={title} href={href} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)', textDecoration: 'none', display: 'block' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div style={{ display: 'inline-flex', padding: '8px', background: '#f3f4f6', borderRadius: '8px' }}>
                   <Icon size={20} color="#111827" />
@@ -57,7 +57,7 @@ export default async function PatientDashboard() {
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: '#111827' }}>{title}</h3>
               <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>{desc}</p>
-            </div>
+            </a>
           ))}
         </div>
 
@@ -72,9 +72,9 @@ export default async function PatientDashboard() {
               Use our AI-powered clinical assistant to triage symptoms and receive curated advice.
             </p>
           </div>
-          <button style={{ background: '#111827', border: 'none', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
-            Start Triage
-          </button>
+          <a href="/doctors" style={{ background: '#111827', border: 'none', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
+            Find a Doctor
+          </a>
         </div>
       </main>
     </div>

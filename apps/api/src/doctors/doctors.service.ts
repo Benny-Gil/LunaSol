@@ -25,9 +25,31 @@ export class DoctorsService {
     return { ...profile, profileComplete }
   }
 
-  async listDoctors() {
-    const doctors = await this.prisma.doctorProfile.findMany({
-      take: 50,
+  async listDoctors(filters: { specialization?: string; search?: string; available?: boolean } = {}) {
+    const now = new Date()
+    const conditions: any[] = []
+
+    if (filters.specialization) {
+      conditions.push({ specialization: { contains: filters.specialization, mode: 'insensitive' } })
+    }
+
+    if (filters.search) {
+      conditions.push({
+        OR: [
+          { name: { contains: filters.search, mode: 'insensitive' } },
+          { specialization: { contains: filters.search, mode: 'insensitive' } },
+        ],
+      })
+    }
+
+    if (filters.available) {
+      conditions.push({
+        slots: { some: { isBlocked: false, appointment: null, startTime: { gte: now } } },
+      })
+    }
+
+    return this.prisma.doctorProfile.findMany({
+      where: conditions.length > 0 ? { AND: conditions } : {},
       select: {
         id: true,
         name: true,
@@ -37,7 +59,6 @@ export class DoctorsService {
         contactDetails: true,
       },
     })
-    return doctors
   }
 
   async getDoctorById(id: string) {
@@ -58,6 +79,25 @@ export class DoctorsService {
     }
 
     return doctor
+  }
+
+  async getDoctorAvailability(id: string) {
+    const doctor = await this.prisma.doctorProfile.findUnique({ where: { id } })
+    if (!doctor) throw new NotFoundException('Doctor not found')
+
+    const now = new Date()
+    const cutoff = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+
+    return this.prisma.availabilitySlot.findMany({
+      where: {
+        doctorId: id,
+        isBlocked: false,
+        appointment: null,
+        startTime: { gte: now, lte: cutoff },
+      },
+      select: { id: true, startTime: true, endTime: true },
+      orderBy: { startTime: 'asc' },
+    })
   }
 
   private async ensureDoctorRecord(clerkId: string) {
