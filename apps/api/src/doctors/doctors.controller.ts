@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  OnModuleInit,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { diskStorage } from 'multer'
@@ -20,7 +21,6 @@ import { DoctorsService } from './doctors.service'
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto'
 
 const uploadDir = join(process.cwd(), 'uploads', 'profile-pictures')
-mkdirSync(uploadDir, { recursive: true })
 
 const profilePictureStorage = diskStorage({
   destination: uploadDir,
@@ -32,8 +32,12 @@ const profilePictureStorage = diskStorage({
 })
 
 @Controller('doctors')
-export class DoctorsController {
+export class DoctorsController implements OnModuleInit {
   constructor(private doctorsService: DoctorsService) {}
+
+  onModuleInit() {
+    mkdirSync(uploadDir, { recursive: true })
+  }
 
   @Public()
   @Get()
