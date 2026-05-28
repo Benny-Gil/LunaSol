@@ -7,7 +7,8 @@
     "build": "nest build",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "test": "jest"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -35,10 +36,15 @@
   "devDependencies": {
     "@nestjs/cli": "^11.0.7",
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.1.0",
     "@types/node": "^22.15.21",
     "@types/pg": "^8.11.11",
+    "@types/supertest": "^7.2.0",
     "dotenv": "^16.4.7",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3"
   }
