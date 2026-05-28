@@ -97,6 +97,3 @@ coverage/
 
 # Local/private files — exclude hackathon brief but track planning docs
 planning
-
-# Claude Code
-CLAUDE.md
