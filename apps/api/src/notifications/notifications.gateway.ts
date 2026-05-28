@@ -11,7 +11,7 @@ import { PrismaService } from '../prisma/prisma.service'
 @WebSocketGateway({ cors: { origin: '*' }, path: '/socket.io' })
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server
+  server!: Server
 
   constructor(private prisma: PrismaService) {}
 
