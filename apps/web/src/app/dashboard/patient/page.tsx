@@ -1,6 +1,7 @@
 import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import { Video, Bot, FolderOpen, Calendar } from 'lucide-react'
+import NotificationBell from '@/components/NotificationBell'
 
 export default async function PatientDashboard() {
   const user = await currentUser()
@@ -23,6 +24,7 @@ export default async function PatientDashboard() {
           <a href="/dashboard/patient/appointments" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Appointments</a>
           <a href="/dashboard/patient/records" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Records</a>
           <a href="/dashboard/patient/profile" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Profile</a>
+          <NotificationBell />
           <UserButton />
         </div>
       </nav>
