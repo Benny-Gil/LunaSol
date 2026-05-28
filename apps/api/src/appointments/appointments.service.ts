@@ -7,13 +7,17 @@ import {
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { PrismaService } from '../prisma/prisma.service'
+import { NotificationsService } from '../notifications/notifications.service'
 import { BookAppointmentDto } from './dto/book-appointment.dto'
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto'
 import { AppointmentStatus } from '@prisma/client'
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   private async getPatientProfile(clerkId: string) {
     const user = await this.prisma.user.findUnique({
@@ -34,10 +38,8 @@ export class AppointmentsService {
   }
 
   private async createNotification(recipientId: string, type: string, message: string) {
-    // TODO: emit real-time event via NotificationsService once #9 (Socket.io gateway) lands
-    await this.prisma.notification.create({
-      data: { recipientId, type, message },
-    })
+    await this.prisma.notification.create({ data: { recipientId, type, message } })
+    this.notifications.emitToUser(recipientId, 'notification', { type, message })
   }
 
   async book(clerkId: string, dto: BookAppointmentDto) {
