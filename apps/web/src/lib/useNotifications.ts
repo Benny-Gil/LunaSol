@@ -52,13 +52,13 @@ export function useNotifications() {
         transports: ['websocket'],
       })
 
-      socket.on('notification', (payload: { type: string; message: string }) => {
+      socket.on('notification', (payload: { id: string; type: string; message: string; createdAt: string }) => {
         const newNotification: Notification = {
-          id: crypto.randomUUID(),
+          id: payload.id,
           type: payload.type,
           message: payload.message,
           isRead: false,
-          createdAt: new Date().toISOString(),
+          createdAt: payload.createdAt ?? new Date().toISOString(),
         }
         setNotifications((prev) => [newNotification, ...prev])
       })

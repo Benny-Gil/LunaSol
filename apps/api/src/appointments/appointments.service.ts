@@ -38,8 +38,13 @@ export class AppointmentsService {
   }
 
   private async createNotification(recipientId: string, type: string, message: string) {
-    await this.prisma.notification.create({ data: { recipientId, type, message } })
-    this.notifications.emitToUser(recipientId, 'notification', { type, message })
+    const notification = await this.prisma.notification.create({ data: { recipientId, type, message } })
+    this.notifications.emitToUser(recipientId, 'notification', {
+      id: notification.id,
+      type,
+      message,
+      createdAt: notification.createdAt,
+    })
   }
 
   async book(clerkId: string, dto: BookAppointmentDto) {

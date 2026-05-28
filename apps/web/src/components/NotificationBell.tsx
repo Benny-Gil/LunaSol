@@ -2,11 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useUser } from '@clerk/nextjs'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '@/lib/useNotifications'
 
 export default function NotificationBell() {
   const router = useRouter()
+  const { user } = useUser()
+  const role = (user?.publicMetadata?.role as string) ?? 'patient'
   const { notifications, unreadCount, markRead } = useNotifications()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -26,7 +29,11 @@ export default function NotificationBell() {
     await markRead(id)
     setOpen(false)
     if (type.startsWith('APPOINTMENT')) {
-      router.push('/dashboard/patient/appointments')
+      router.push(
+        role === 'doctor'
+          ? '/dashboard/doctor'
+          : '/dashboard/patient/appointments',
+      )
     }
   }
 

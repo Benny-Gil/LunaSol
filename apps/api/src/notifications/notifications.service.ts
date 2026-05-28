@@ -10,7 +10,7 @@ export class NotificationsService {
   ) {}
 
   emitToUser(userId: string, event: string, payload: object) {
-    this.gateway.server.to(userId).emit(event, payload)
+    this.gateway.server?.to(userId).emit(event, payload)
   }
 
   async findForUser(clerkId: string) {
