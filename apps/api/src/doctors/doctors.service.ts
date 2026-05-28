@@ -27,6 +27,7 @@ export class DoctorsService {
 
   async listDoctors() {
     const doctors = await this.prisma.doctorProfile.findMany({
+      take: 50,
       select: {
         id: true,
         name: true,
@@ -78,6 +79,9 @@ export class DoctorsService {
           },
         },
         include: { doctor: true },
+      })
+      await this.clerk.users.updateUserMetadata(clerkId, {
+        publicMetadata: { role: 'doctor' },
       })
     } else if (!user.doctor) {
       await this.prisma.doctorProfile.create({
