@@ -6,6 +6,7 @@ import {
   Body,
   Req,
   Param,
+  Query,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -41,8 +42,16 @@ export class DoctorsController implements OnModuleInit {
 
   @Public()
   @Get()
-  async listDoctors() {
-    return this.doctorsService.listDoctors()
+  async listDoctors(
+    @Query('specialization') specialization?: string,
+    @Query('search') search?: string,
+    @Query('available') available?: string,
+  ) {
+    return this.doctorsService.listDoctors({
+      specialization,
+      search,
+      available: available === 'true',
+    })
   }
 
   @Roles('doctor')
@@ -83,5 +92,11 @@ export class DoctorsController implements OnModuleInit {
   @Get(':id')
   async getDoctorById(@Param('id') id: string) {
     return this.doctorsService.getDoctorById(id)
+  }
+
+  @Public()
+  @Get(':id/availability')
+  async getDoctorAvailability(@Param('id') id: string) {
+    return this.doctorsService.getDoctorAvailability(id)
   }
 }
