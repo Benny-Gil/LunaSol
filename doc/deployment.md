@@ -5,7 +5,7 @@
 **Why Docker:**
 
 - Reproducible builds — identical environment in dev and production
-- All services (Next.js, NestJS, FastAPI, Postgres, Jitsi, Nginx, pgAdmin) are orchestrated with a single `docker compose` command
+- All services (Next.js, NestJS, FastAPI, Postgres, LiveKit, Nginx, pgAdmin) are orchestrated with a single `docker compose` command
 - Easy to restart, update, or replace individual services without touching others
 - `docker-compose.yml` (dev) and `docker-compose.prod.yml` (prod) share service definitions with environment-specific overrides
 
@@ -29,7 +29,7 @@
 | `ai`          | FastAPI + llama-cpp    | internal          | No                   |
 | `db`          | postgres:16            | internal          | No                   |
 | `pgadmin`     | dpage/pgadmin4         | internal          | Via Nginx `/pgadmin` |
-| `jitsi`       | jitsi stack            | internal          | Via Nginx `/meet`    |
+| `livekit`     | livekit/livekit-server | internal          | Via Nginx `/meet`    |
 | `nginx`       | nginx:alpine           | internal + tunnel | Entry point          |
 | `cloudflared` | cloudflare/cloudflared | internal          | Tunnel daemon        |
 
@@ -56,7 +56,7 @@ server {
     }
 
     location /meet {
-        proxy_pass https://jitsi:8443;
+        proxy_pass http://livekit:7880;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -105,7 +105,8 @@ All secrets live in `.env.prod` on the server — never in the repository.
 | `DATABASE_URL`             | NestJS / Prisma                |
 | `CLERK_SECRET_KEY`         | NestJS auth guard + webhook    |
 | `CLERK_WEBHOOK_SECRET`     | Webhook signature verification |
-| `JITSI_JWT_SECRET`         | Room token signing             |
+| `LIVEKIT_API_KEY`          | Room token signing key name    |
+| `LIVEKIT_API_SECRET`       | Room token signing secret      |
 | `PGADMIN_DEFAULT_EMAIL`    | pgAdmin login                  |
 | `PGADMIN_DEFAULT_PASSWORD` | pgAdmin login                  |
 | `CLOUDFLARE_TUNNEL_TOKEN`  | cloudflared tunnel daemon      |

@@ -16,7 +16,7 @@ LunaSol is a full-stack telehealth web application split across three runtime se
 [Nginx :80]
     ├── /          →  web      (Next.js   :3000)
     ├── /api/*     →  api      (NestJS    :3001)   ← WebSocket upgrade for Socket.io
-    ├── /meet/*    →  jitsi    (Jitsi     :8443)   ← WebSocket upgrade
+    ├── /meet/*    →  livekit  (LiveKit   :7880)   ← WebSocket upgrade
     └── /pgadmin   →  pgadmin  (pgAdmin   :5050)
 
 [api] ── internal Docker network ──► [ai]       (FastAPI   :8000)   ← never public
