@@ -4,11 +4,12 @@ import { AuthModule } from './auth/auth.module'
 import { PatientsModule } from './patients/patients.module'
 import { DoctorsModule } from './doctors/doctors.module'
 import { AppointmentsModule } from './appointments/appointments.module'
+import { ConsultationsModule } from './consultations/consultations.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { AiModule } from './ai/ai.module'
 
 @Module({
-  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, NotificationsModule, AiModule],
+  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, ConsultationsModule, NotificationsModule, AiModule],
 })
 export class AppModule {}
 
