@@ -3,33 +3,50 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "pnpm --filter @lunasol/types build && nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "test": "jest",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@clerk/backend": "^3.4.13",
     "@lunasol/types": "workspace:*",
     "@nestjs/common": "^11.1.1",
     "@nestjs/core": "^11.1.1",
     "@nestjs/platform-express": "^11.1.1",
+    "@nestjs/platform-socket.io": "^11.1.24",
+    "@nestjs/websockets": "^11.1.24",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
+    "multer": "^2.1.1",
     "pg": "^8.13.3",
     "prisma": "^7.8.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.3",
+    "svix": "^1.94.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.7",
+    "@nestjs/testing": "^11.1.24",
     "@types/express": "^5.0.3",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^2.1.0",
     "@types/node": "^22.15.21",
     "@types/pg": "^8.11.11",
+    "@types/supertest": "^6.0.2",
     "dotenv": "^16.4.7",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3"
   }

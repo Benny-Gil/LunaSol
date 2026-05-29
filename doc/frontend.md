@@ -75,7 +75,12 @@ Used for interactive features: booking forms, slot pickers, the AI symptom input
 
 ### SSE (AI Recommendations)
 
-The symptom input component opens an `EventSource` connection and renders events as they stream in. This must be a Client Component.
+The symptom triage chat UI uses the custom `useAiRecommendation` React hook. Instead of a basic `EventSource` (which only supports GET requests and does not handle request payloads cleanly), it implements a streaming client using standard `fetch`, `ReadableStream`, and `AbortController`.
+*   **State Management**: Tracks dialogue states (`reasoning`, recommended `doctors`, `loading` status, and full conversational `messages` history).
+*   **Emergency Interceptions**: Highlights emergency notices in high-contrast red alert callouts.
+*   **Conversational Flow**: Enables the patient to perform multi-step discussions with MedGemma by preserving past turns in the query history.
+*   **Compliance disclaimer**: A permanent amber alert card is placed next to or above inputs reminding users that the tool is strictly informational and is not a professional diagnostic replacement.
+
 
 ### Socket.io
 

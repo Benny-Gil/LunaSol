@@ -38,5 +38,7 @@ COPY apps/api/prisma.config.ts ./prisma.config.ts
 
 RUN node_modules/.bin/prisma generate
 
+RUN mkdir -p /app/uploads/profile-pictures
+
 EXPOSE 3001
 CMD ["node", "dist/main"]

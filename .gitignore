@@ -8,27 +8,42 @@ dist/
 build/
 .next/
 out/
+*.tsbuildinfo
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+.env.development
+.env.test
+.env.production
+.env.staging
+!.env.example
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # OS
 .DS_Store
+.DS_Store?
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 
 # Docker
 .docker/
@@ -40,6 +55,7 @@ Thumbs.db
 .copilot/
 .aider*
 .agents/
+graphify-out/
 
 # Turbo
 .turbo/
@@ -48,8 +64,36 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *.pyo
+*.pyd
 .venv/
 venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.eggs/
+htmlcov/
+
+# LLM model files (large binaries)
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+apps/ai/models/
+
+# Uploaded files
+apps/api/uploads/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.orig
+*.tgz
+*.pem
+*.key
+!*.pub.key
 
 # Local/private files — exclude hackathon brief but track planning docs
 planning
