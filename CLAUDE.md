@@ -49,10 +49,11 @@ Three runtime services behind a single Nginx entry point:
 Browser → Cloudflare Tunnel → Nginx :80
   /        → web  (Next.js  :3000)
   /api/*   → api  (NestJS   :3001)
-  /meet/*  → jitsi
 ```
 
 `api` communicates with `ai` (FastAPI :8000) and `db` (Postgres :5432) over the internal Docker network — neither is publicly reachable.
+
+Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud project (`NEXT_PUBLIC_LIVEKIT_URL`), not through Nginx/the Tunnel. The API only mints join tokens and receives LiveKit webhooks at `/api/livekit/webhook`. See `doc/video.md`.
 
 ### `apps/web` — Next.js 14
 

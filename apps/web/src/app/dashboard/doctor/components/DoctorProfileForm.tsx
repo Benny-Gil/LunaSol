@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { Camera } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { SPECIALIZATIONS } from '@lunasol/types'
+
+const OTHER = '__other__'
 
 interface DoctorProfileData {
   name: string
@@ -33,19 +36,23 @@ export default function DoctorProfileForm({ mode }: { mode: 'onboarding' | 'edit
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+  // True when the loaded/typed specialization isn't one of the canonical options.
+  const [useOther, setUseOther] = useState(false)
 
   useEffect(() => {
     async function load() {
       try {
         const token = await getToken()
         const data = await apiFetch('/doctors/me', { token: token || undefined })
+        const specialization = data.specialization || ''
         setProfile({
           name: data.name || '',
-          specialization: data.specialization || '',
+          specialization,
           bio: data.bio || '',
           contactDetails: data.contactDetails || '',
           profilePictureUrl: data.profilePictureUrl || null,
         })
+        setUseOther(!!specialization && !SPECIALIZATIONS.includes(specialization as never))
       } catch {
         // Profile doesn't exist yet, keep defaults
       } finally {
@@ -228,12 +235,32 @@ export default function DoctorProfileForm({ mode }: { mode: 'onboarding' | 'edit
         {/* Specialization */}
         <div style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>Specialization *</label>
-          <input
-            style={{ ...inputStyle, borderColor: errors.specialization ? '#dc2626' : '#d1d5db' }}
-            value={profile.specialization}
-            onChange={(e) => setProfile((p) => ({ ...p, specialization: e.target.value }))}
-            placeholder="e.g. Cardiology, General Medicine"
-          />
+          <select
+            style={{ ...inputStyle, background: '#ffffff', cursor: 'pointer', borderColor: errors.specialization ? '#dc2626' : '#d1d5db' }}
+            value={useOther ? OTHER : profile.specialization}
+            onChange={(e) => {
+              const val = e.target.value
+              if (val === OTHER) {
+                setUseOther(true)
+                setProfile((p) => ({ ...p, specialization: '' }))
+              } else {
+                setUseOther(false)
+                setProfile((p) => ({ ...p, specialization: val }))
+              }
+            }}
+          >
+            <option value="" disabled>Select a specialization</option>
+            {SPECIALIZATIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            <option value={OTHER}>Other…</option>
+          </select>
+          {useOther && (
+            <input
+              style={{ ...inputStyle, marginTop: '8px', borderColor: errors.specialization ? '#dc2626' : '#d1d5db' }}
+              value={profile.specialization}
+              onChange={(e) => setProfile((p) => ({ ...p, specialization: e.target.value }))}
+              placeholder="Enter your specialization"
+            />
+          )}
           {errors.specialization && <p style={errorStyle}>{errors.specialization}</p>}
         </div>
 

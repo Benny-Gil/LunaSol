@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar, Clock, User } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
-  doctor: { id: string; name: string; specialization: string; profilePictureUrl: string | null }
+  patient: { id: string; name: string; profilePictureUrl: string | null }
   slot: { startTime: string; endTime: string }
 }
 
@@ -20,40 +20,26 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   COMPLETED: { bg: '#f3f4f6', text: '#374151' },
 }
 
-export default function AppointmentsPage() {
+export default function DoctorAppointmentsPage() {
   const router = useRouter()
   const { getToken } = useAuth()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [cancelling, setCancelling] = useState<string | null>(null)
 
-  async function load() {
-    try {
-      const token = await getToken()
-      const data = await apiFetch('/appointments/mine', { token: token || undefined })
-      setAppointments(data)
-    } catch {
-      // fall through
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    async function load() {
+      try {
+        const token = await getToken()
+        const data = await apiFetch('/appointments/mine', { token: token || undefined })
+        setAppointments(data)
+      } catch {
+        // fall through
+      } finally {
+        setLoading(false)
+      }
     }
-  }
-
-  useEffect(() => { load() }, [])
-
-  async function handleCancel(id: string) {
-    if (!confirm('Cancel this appointment?')) return
-    setCancelling(id)
-    try {
-      const token = await getToken()
-      await apiFetch(`/appointments/${id}/cancel`, { token: token || undefined, method: 'PATCH' })
-      await load()
-    } catch (err: any) {
-      alert(err.message || 'Failed to cancel appointment.')
-    } finally {
-      setCancelling(null)
-    }
-  }
+    load()
+  }, [getToken])
 
   const upcoming = appointments.filter((a) => a.status === 'PENDING' || a.status === 'CONFIRMED')
   const past = appointments.filter((a) => a.status === 'CANCELLED' || a.status === 'COMPLETED')
@@ -62,12 +48,12 @@ export default function AppointmentsPage() {
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#f9fafb', minHeight: '100vh' }}>
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', background: '#ffffff', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a href="/dashboard/patient" style={{ fontSize: '18px', fontWeight: 700, color: '#111827', textDecoration: 'none' }}>LunaSol</a>
+          <a href="/dashboard/doctor" style={{ fontSize: '18px', fontWeight: 700, color: '#111827', textDecoration: 'none' }}>LunaSol</a>
           <span style={{ color: '#d1d5db' }}>/</span>
           <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 500 }}>Appointments</span>
         </div>
-        <a href="/doctors" style={{ padding: '8px 16px', background: '#111827', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}>
-          Book new
+        <a href="/dashboard/doctor/schedule" style={{ padding: '8px 16px', background: '#10b981', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}>
+          Manage schedule
         </a>
       </nav>
 
@@ -78,10 +64,7 @@ export default function AppointmentsPage() {
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <Calendar size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#111827', marginBottom: '8px' }}>No appointments yet</h2>
-            <p style={{ color: '#6b7280', marginBottom: '24px' }}>Browse our doctors and book your first consultation.</p>
-            <a href="/doctors" style={{ padding: '12px 24px', background: '#111827', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}>
-              Find a doctor
-            </a>
+            <p style={{ color: '#6b7280' }}>When patients book your open slots, their requests will appear here.</p>
           </div>
         ) : (
           <>
@@ -89,7 +72,7 @@ export default function AppointmentsPage() {
               <section style={{ marginBottom: '40px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', marginBottom: '16px' }}>Upcoming</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {upcoming.map((appt) => <AppointmentCard key={appt.id} appt={appt} onCancel={handleCancel} cancelling={cancelling} onClick={() => router.push(`/dashboard/patient/appointments/${appt.id}`)} />)}
+                  {upcoming.map((appt) => <AppointmentCard key={appt.id} appt={appt} onClick={() => router.push(`/dashboard/doctor/appointments/${appt.id}`)} />)}
                 </div>
               </section>
             )}
@@ -97,7 +80,7 @@ export default function AppointmentsPage() {
               <section>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', marginBottom: '16px' }}>Past</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {past.map((appt) => <AppointmentCard key={appt.id} appt={appt} onCancel={handleCancel} cancelling={cancelling} onClick={() => router.push(`/dashboard/patient/appointments/${appt.id}`)} />)}
+                  {past.map((appt) => <AppointmentCard key={appt.id} appt={appt} onClick={() => router.push(`/dashboard/doctor/appointments/${appt.id}`)} />)}
                 </div>
               </section>
             )}
@@ -108,29 +91,25 @@ export default function AppointmentsPage() {
   )
 }
 
-function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
-  appt: Appointment
-  onCancel: (id: string) => void
-  cancelling: string | null
-  onClick: () => void
-}) {
+function AppointmentCard({ appt, onClick }: { appt: Appointment; onClick: () => void }) {
   const statusStyle = STATUS_COLORS[appt.status] || { bg: '#f3f4f6', text: '#374151' }
   const date = new Date(appt.slot.startTime)
-  const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED'
 
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px', cursor: 'pointer' }} onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-        <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 4px', color: '#111827' }}>{appt.doctor.name}</h3>
-          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{appt.doctor.specialization}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', padding: '8px', background: '#ecfdf5', borderRadius: '8px', color: '#059669' }}>
+            <User size={18} />
+          </div>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: '#111827' }}>{appt.patient.name || 'Patient'}</h3>
         </div>
         <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px', background: statusStyle.bg, color: statusStyle.text, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
           {appt.status}
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', marginBottom: canCancel ? '16px' : '0' }}>
+      <div style={{ display: 'flex', gap: '20px' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
           <Calendar size={14} /> {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </span>
@@ -138,18 +117,6 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
           <Clock size={14} /> {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
         </span>
       </div>
-
-      {canCancel && (
-        <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => onCancel(appt.id)}
-            disabled={cancelling === appt.id}
-            style={{ padding: '8px 16px', background: 'none', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
-          >
-            {cancelling === appt.id ? 'Cancelling...' : 'Cancel'}
-          </button>
-        </div>
-      )}
     </div>
   )
 }
