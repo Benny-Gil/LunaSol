@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/nextjs'
 import { ArrowLeft, Calendar, Clock, User, Video } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ConsultationPanel from './ConsultationPanel'
+import PatientHistory from './PatientHistory'
 
 interface Appointment {
   id: string
@@ -144,6 +145,8 @@ export default function DoctorAppointmentDetailPage() {
             {(appt.status === 'CONFIRMED' || appt.status === 'COMPLETED') && (
               <ConsultationPanel appointmentId={appt.id} />
             )}
+
+            <PatientHistory patientId={appt.patient.id} currentAppointmentId={appt.id} />
           </>
         )}
       </main>
