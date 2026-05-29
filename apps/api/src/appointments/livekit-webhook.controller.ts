@@ -5,7 +5,8 @@ import { AppointmentsService } from './appointments.service'
 /**
  * Receives LiveKit server webhooks. Public (no Clerk auth) — authenticity is
  * established by the signed Authorization header, verified in the service via
- * the LiveKit API key/secret. Configured in `livekit/livekit.yaml`.
+ * the LiveKit API key/secret. The webhook URL is configured in the LiveKit
+ * Cloud project dashboard (→ /api/livekit/webhook).
  */
 @Controller('livekit')
 export class LivekitWebhookController {

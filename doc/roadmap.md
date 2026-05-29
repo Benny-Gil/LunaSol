@@ -27,7 +27,7 @@ Progress against the planned feature set. Updated as of the current state of `ma
 - [x] Patient medical records page (consultation records + prescriptions, read-only)
 
 ### Video Consultation (LiveKit)
-- [x] Self-hosted `livekit-server` Docker service (dev + prod) behind Nginx `/meet` (WebSocket upgrade)
+- [x] Video via **LiveKit Cloud** (managed SFU+TURN) — browser connects directly; no self-hosted media (prod is NAT'd behind the Cloudflare Tunnel, which can't carry WebRTC UDP — see #58)
 - [x] `livekitRoom` populated on appointment confirm (renamed from legacy `jitsiRoom`)
 - [x] `GET /api/appointments/:id/livekit-token` — server-side token via `livekit-server-sdk`, scoped to the appointment room, 15 min TTL, patient/doctor only
 - [x] Reusable `<ConsultationSession>` — native `@livekit/components-react` UI, no iframe
