@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
+import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '../../lib/specializations'
 
 interface Doctor {
   id: string
@@ -14,17 +15,8 @@ interface Doctor {
   contactDetails: string | null
 }
 
-const SPECIALIZATIONS = [
-  'All',
-  'Cardiology',
-  'Dermatology',
-  'Family Medicine',
-  'General Medicine',
-  'Neurology',
-  'Orthopedics',
-  'Pediatrics',
-  'Psychiatry',
-]
+// 'All' is a filter-only option; the rest come from the shared canonical list.
+const SPECIALIZATIONS = ['All', ...SPECIALIZATION_OPTIONS]
 
 const QUICK_SYMPTOMS = [
   { label: 'Severe headache', text: 'I have a severe, throbbing headache on the right side of my head with some light sensitivity and nausea.' },
