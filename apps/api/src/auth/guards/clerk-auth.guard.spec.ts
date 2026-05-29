@@ -1,10 +1,13 @@
 import { ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { ClerkAuthGuard } from './clerk-auth.guard'
+import { ClerkAuthGuard, clearRoleCache } from './clerk-auth.guard'
 
-// Mock Clerk's token verification so we control the decoded claims.
+// Mock Clerk's token verification and backend client so we control the
+// decoded claims and the publicMetadata fallback lookup.
+const mockGetUser = jest.fn()
 jest.mock('@clerk/backend', () => ({
   verifyToken: jest.fn(),
+  createClerkClient: jest.fn(() => ({ users: { getUser: mockGetUser } })),
 }))
 import { verifyToken } from '@clerk/backend'
 
@@ -29,11 +32,14 @@ describe('ClerkAuthGuard role resolution', () => {
     guard = new ClerkAuthGuard(reflector)
     process.env.CLERK_SECRET_KEY = 'sk_test_x'
     mockedVerify.mockReset()
+    mockGetUser.mockReset()
+    clearRoleCache()
   })
 
   it('does NOT default a missing role to "patient"', async () => {
-    // Decoded token with no role claim anywhere.
+    // Decoded token with no role claim, and Clerk has no role in publicMetadata.
     mockedVerify.mockResolvedValue({ sub: 'clerk-doc' })
+    mockGetUser.mockResolvedValue({ publicMetadata: {} })
     const { ctx, req } = contextWithAuth('Bearer good-token')
 
     await expect(guard.canActivate(ctx)).resolves.toBe(true)
@@ -42,11 +48,31 @@ describe('ClerkAuthGuard role resolution', () => {
     expect(req.user.role).toBeUndefined()
   })
 
-  it('uses the role claim when present', async () => {
+  it('uses the role claim when present (no backend lookup)', async () => {
     mockedVerify.mockResolvedValue({ sub: 'clerk-doc', publicMetadata: { role: 'doctor' } })
     const { ctx, req } = contextWithAuth('Bearer good-token')
 
     await expect(guard.canActivate(ctx)).resolves.toBe(true)
     expect(req.user.role).toBe('doctor')
+    expect(mockGetUser).not.toHaveBeenCalled()
+  })
+
+  it('falls back to Clerk publicMetadata when the token has no role claim', async () => {
+    mockedVerify.mockResolvedValue({ sub: 'clerk-doc-2' })
+    mockGetUser.mockResolvedValue({ publicMetadata: { role: 'doctor' } })
+    const { ctx, req } = contextWithAuth('Bearer good-token')
+
+    await expect(guard.canActivate(ctx)).resolves.toBe(true)
+    expect(req.user.role).toBe('doctor')
+    expect(mockGetUser).toHaveBeenCalledWith('clerk-doc-2')
+  })
+
+  it('leaves role undefined when the backend lookup fails', async () => {
+    mockedVerify.mockResolvedValue({ sub: 'clerk-doc-3' })
+    mockGetUser.mockRejectedValue(new Error('clerk down'))
+    const { ctx, req } = contextWithAuth('Bearer good-token')
+
+    await expect(guard.canActivate(ctx)).resolves.toBe(true)
+    expect(req.user.role).toBeUndefined()
   })
 })
