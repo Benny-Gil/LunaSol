@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { User, Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
@@ -30,8 +30,8 @@ function groupByDate(slots: Slot[]): Record<string, Slot[]> {
   }, {} as Record<string, Slot[]>)
 }
 
-export default function DoctorDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function DoctorDetailPage() {
+  const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { getToken, isSignedIn } = useAuth()
 
