@@ -22,7 +22,15 @@ const QUICK_SYMPTOMS = [
   { label: 'Severe headache', text: 'I have a severe, throbbing headache on the right side of my head with some light sensitivity and nausea.' },
   { label: 'Skin rash', text: 'There is a red, itchy rash spreading across my arm, and it feels slightly warm to the touch.' },
   { label: 'Chest pressure', text: 'I am feeling a tight pressure in my chest, and it feels like it is radiating up to my neck.' },
-  { label: 'Persistent cough', text: 'I have had a dry, persistent cough for over two weeks, and it gets worse at night with slight wheezing.' }
+  { label: 'Persistent cough', text: 'I have had a dry, persistent cough for over two weeks, and it gets worse at night with slight wheezing.' },
+  { label: 'Stomach pain', text: 'I have had cramping pain in my upper abdomen for a few days, with bloating, heartburn, and occasional nausea after eating.' },
+  { label: 'Joint pain', text: 'My knees and fingers have been swollen, stiff, and achy for several weeks, and the stiffness is worst in the morning.' },
+  { label: 'Anxiety & low mood', text: 'I have been feeling persistently anxious and low for the past month, with trouble sleeping and difficulty concentrating.' },
+  { label: 'Always thirsty & tired', text: 'I am constantly thirsty, urinating often, losing weight, and feeling very fatigued over the last few weeks.' },
+  { label: 'Shortness of breath', text: 'I get short of breath and wheezy after light activity, with a tight chest and a cough that brings up phlegm.' },
+  { label: 'Ear pain', text: 'My right ear has been painful and feels blocked for several days, with reduced hearing and some ringing.' },
+  { label: 'Blurry vision', text: 'My vision has become blurry over the past week, with some eye strain, redness, and sensitivity to light.' },
+  { label: 'Painful urination', text: 'It burns when I urinate and I feel the urge to go very frequently, with some lower abdominal discomfort.' },
 ]
 
 const formatAiResponse = (content: string, isUser: boolean = false) => {
