@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { Camera } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
-import { SPECIALIZATIONS } from '@/lib/specializations'
+import { SPECIALIZATIONS } from '@lunasol/types'
 
 const OTHER = '__other__'
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
-import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '../../lib/specializations'
+import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '@lunasol/types'
 
 interface Doctor {
   id: string
