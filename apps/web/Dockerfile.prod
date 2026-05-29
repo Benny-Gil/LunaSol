@@ -1,6 +1,6 @@
 FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 ENV PNPM_CONFIG_TRUST_LOCKFILE=true
 
 WORKDIR /app
@@ -22,14 +22,22 @@ RUN pnpm --filter @lunasol/types build
 WORKDIR /app/apps/web
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL
+ENV NEXT_PUBLIC_CLERK_SIGN_IN_URL=$NEXT_PUBLIC_CLERK_SIGN_IN_URL
+ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL
+ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=$NEXT_PUBLIC_CLERK_SIGN_UP_URL
 ARG NEXT_PUBLIC_LIVEKIT_URL
 ENV NEXT_PUBLIC_LIVEKIT_URL=$NEXT_PUBLIC_LIVEKIT_URL
 RUN pnpm build
 
 FROM node:22-alpine AS runner
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 ENV PNPM_CONFIG_TRUST_LOCKFILE=true
+# Prevent pnpm from re-verifying/installing deps at container start. The image is
+# built with `--prod`, which pnpm's verify-deps-before-run otherwise treats as
+# out-of-sync and "fixes" by running a full network install on every boot.
+ENV PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN=false
 ENV NODE_ENV=production
 
 WORKDIR /app
@@ -47,4 +55,7 @@ COPY packages/types ./packages/types
 WORKDIR /app/apps/web
 
 EXPOSE 3000
-CMD ["pnpm", "start"]
+# Invoke the Next.js binary directly rather than via `pnpm start`, so no pnpm
+# dependency verification/install runs at container startup (avoids boot-time
+# network calls to the npm registry).
+CMD ["/app/apps/web/node_modules/.bin/next", "start", "--port", "3000"]
