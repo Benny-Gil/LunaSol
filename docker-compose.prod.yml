@@ -30,6 +30,7 @@ services:
       - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
       - NODE_ENV=production
       - AI_SERVICE_URL=http://ai:8000
+      - AI_ENABLED=${AI_ENABLED:-true}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
