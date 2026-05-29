@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
+import { AccessToken } from 'livekit-server-sdk'
 import { PrismaService } from '../prisma/prisma.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { BookAppointmentDto } from './dto/book-appointment.dto'
@@ -219,11 +220,11 @@ export class AppointmentsService {
       throw new ConflictException('Only pending appointments can be confirmed')
     }
 
-    const jitsiRoom = `lunasol-${randomUUID().replace(/-/g, '').slice(0, 12)}`
+    const livekitRoom = `appt-${randomUUID()}`
 
     const updated = await this.prisma.appointment.update({
       where: { id },
-      data: { status: AppointmentStatus.CONFIRMED, jitsiRoom },
+      data: { status: AppointmentStatus.CONFIRMED, livekitRoom },
       include: { slot: true, doctor: true },
     })
 
@@ -278,5 +279,53 @@ export class AppointmentsService {
     }
 
     return appointment
+  }
+
+  async getLivekitToken(clerkId: string, id: string, role: string) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+      include: { doctor: true, patient: true },
+    })
+
+    if (!appointment) throw new NotFoundException('Appointment not found')
+
+    let displayName: string
+    if (role === 'doctor') {
+      const { doctor } = await this.getDoctorProfile(clerkId)
+      if (appointment.doctorId !== doctor.id) throw new ForbiddenException('Not your appointment')
+      displayName = appointment.doctor.name
+    } else {
+      const { patient } = await this.getPatientProfile(clerkId)
+      if (appointment.patientId !== patient.id) throw new ForbiddenException('Not your appointment')
+      displayName = appointment.patient.name
+    }
+
+    if (appointment.status !== AppointmentStatus.CONFIRMED || !appointment.livekitRoom) {
+      throw new ConflictException('Session not available')
+    }
+
+    const apiKey = process.env.LIVEKIT_API_KEY
+    const apiSecret = process.env.LIVEKIT_API_SECRET
+    if (!apiKey || !apiSecret) {
+      throw new BadRequestException('LiveKit is not configured')
+    }
+
+    const at = new AccessToken(apiKey, apiSecret, {
+      identity: clerkId,
+      name: displayName,
+      ttl: '15m',
+    })
+    at.addGrant({
+      room: appointment.livekitRoom,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+    })
+
+    return {
+      token: await at.toJwt(),
+      room: appointment.livekitRoom,
+      url: process.env.NEXT_PUBLIC_LIVEKIT_URL,
+    }
   }
 }
