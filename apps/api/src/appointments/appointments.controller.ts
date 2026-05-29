@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Param, Body, Req } from '@nestjs/common'
+import { Controller, Post, Get, Patch, Param, Body, Req, Query } from '@nestjs/common'
 import { Roles } from '../auth/decorators/roles.decorator'
 import { AppointmentsService } from './appointments.service'
 import { BookAppointmentDto } from './dto/book-appointment.dto'
@@ -16,8 +16,8 @@ export class AppointmentsController {
 
   @Roles('patient', 'doctor')
   @Get('mine')
-  listMine(@Req() req: any) {
-    return this.appointmentsService.listMine(req.user.id, req.user.role)
+  listMine(@Req() req: any, @Query('patientId') patientId?: string) {
+    return this.appointmentsService.listMine(req.user.id, req.user.role, patientId)
   }
 
   @Roles('patient', 'doctor')

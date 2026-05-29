@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Req,
   Param,
@@ -20,6 +21,7 @@ import { Roles } from '../auth/decorators/roles.decorator'
 import { Public } from '../auth/decorators/public.decorator'
 import { DoctorsService } from './doctors.service'
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto'
+import { CreateAvailabilitySlotDto } from './dto/create-availability-slot.dto'
 
 const uploadDir = join(process.cwd(), 'uploads', 'profile-pictures')
 
@@ -86,6 +88,36 @@ export class DoctorsController implements OnModuleInit {
       throw new BadRequestException('No file uploaded')
     }
     return this.doctorsService.updatePicture(req.user.id, file.filename)
+  }
+
+  @Roles('doctor')
+  @Get('me/availability')
+  async listOwnAvailability(@Req() req: any) {
+    return this.doctorsService.listOwnAvailability(req.user.id)
+  }
+
+  @Roles('doctor')
+  @Post('me/availability')
+  async createAvailabilitySlot(@Req() req: any, @Body() dto: CreateAvailabilitySlotDto) {
+    return this.doctorsService.createAvailabilitySlot(req.user.id, dto)
+  }
+
+  @Roles('doctor')
+  @Patch('me/availability/:id/block')
+  async blockSlot(@Req() req: any, @Param('id') id: string) {
+    return this.doctorsService.setSlotBlocked(req.user.id, id, true)
+  }
+
+  @Roles('doctor')
+  @Patch('me/availability/:id/unblock')
+  async unblockSlot(@Req() req: any, @Param('id') id: string) {
+    return this.doctorsService.setSlotBlocked(req.user.id, id, false)
+  }
+
+  @Roles('doctor')
+  @Delete('me/availability/:id')
+  async deleteSlot(@Req() req: any, @Param('id') id: string) {
+    return this.doctorsService.deleteAvailabilitySlot(req.user.id, id)
   }
 
   @Public()
