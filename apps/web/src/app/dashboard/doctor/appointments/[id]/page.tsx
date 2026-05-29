@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { ArrowLeft, Calendar, Clock, User, Video } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import ConsultationPanel from './ConsultationPanel'
 
 interface Appointment {
   id: string
@@ -139,6 +140,10 @@ export default function DoctorAppointmentDetailPage() {
                 )}
               </div>
             </div>
+
+            {(appt.status === 'CONFIRMED' || appt.status === 'COMPLETED') && (
+              <ConsultationPanel appointmentId={appt.id} />
+            )}
           </>
         )}
       </main>
