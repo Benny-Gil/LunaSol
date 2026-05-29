@@ -64,6 +64,12 @@ services:
       # GPU is busy, set CUDA_VISIBLE_DEVICES="" to enumerate 0 devices and fall
       # back to CPU cleanly (the GPU reservation stays so libcuda.so.1 is linkable).
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES-0}
+      # Memory tuning: short context + flash attention + quantized KV cache.
+      # q8_0 KV halves cache size at <0.1% quality cost (flash_attn required for V quant).
+      - N_CTX=${N_CTX:-2048}
+      - FLASH_ATTN=${FLASH_ATTN:-true}
+      - KV_CACHE_TYPE_K=${KV_CACHE_TYPE_K:-q8_0}
+      - KV_CACHE_TYPE_V=${KV_CACHE_TYPE_V:-q8_0}
     deploy:
       resources:
         reservations:
