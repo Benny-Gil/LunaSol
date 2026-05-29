@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements.txt .
-# Pre-built CUDA wheel avoids ~10min nvcc compilation from the devel image
+# Install pre-built CUDA 12.2 wheel directly — 0.3.23 is the latest release with a cu122 build
+# and no cu122 wheel exists for older versions. Dev uses build-essential to compile from source.
 RUN pip3 install --no-cache-dir \
-    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu122 \
-    -r requirements.txt
+    "https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.23-cu122/llama_cpp_python-0.3.23-py3-none-linux_x86_64.whl"
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
