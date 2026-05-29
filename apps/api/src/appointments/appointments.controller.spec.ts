@@ -47,6 +47,11 @@ describe('AppointmentsController (integration) — livekit-token', () => {
     livekitRoom: ROOM,
     doctor: { id: 'doc-1', name: 'Dr. Alice' },
     patient: { id: 'pat-1', name: 'Bob Patient' },
+    // In-window: started a minute ago, ends in 29 minutes.
+    slot: {
+      startTime: new Date(Date.now() - 60_000),
+      endTime: new Date(Date.now() + 29 * 60_000),
+    },
   }
 
   beforeAll(async () => {

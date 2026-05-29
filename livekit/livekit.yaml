@@ -11,6 +11,15 @@ rtc:
   port_range_end: 50100
   use_external_ip: true
 
+# Server events (e.g. participant_joined) POSTed to the API on the internal
+# Docker network. `api_key` selects which configured key signs the webhook JWT,
+# so it must equal LIVEKIT_API_KEY for the environment (dev default: devkey);
+# the API verifies with the matching secret. See LivekitWebhookController.
+webhook:
+  api_key: devkey
+  urls:
+    - http://api:3001/api/livekit/webhook
+
 # Quiet, structured logs
 logging:
   level: info

@@ -23,7 +23,8 @@ describe('AppointmentsService.getLivekitToken', () => {
   const CLERK_ID = 'clerk_user_1'
   const ROOM = 'appt-room-123'
 
-  const baseAppointment = {
+  /** Build an appointment whose slot window is offset from "now" (ms). */
+  const apptWithSlot = (startOffsetMs: number, endOffsetMs: number) => ({
     id: 'appt-1',
     doctorId: 'doc-1',
     patientId: 'pat-1',
@@ -31,7 +32,14 @@ describe('AppointmentsService.getLivekitToken', () => {
     livekitRoom: ROOM,
     doctor: { id: 'doc-1', name: 'Dr. Alice' },
     patient: { id: 'pat-1', name: 'Bob Patient' },
-  }
+    slot: {
+      startTime: new Date(Date.now() + startOffsetMs),
+      endTime: new Date(Date.now() + endOffsetMs),
+    },
+  })
+
+  // In-window by default: started a minute ago, ends in 29 minutes.
+  const baseAppointment = apptWithSlot(-60_000, 29 * 60_000)
 
   beforeEach(() => {
     prisma = {
@@ -116,6 +124,44 @@ describe('AppointmentsService.getLivekitToken', () => {
     await expect(service.getLivekitToken(CLERK_ID, 'appt-1', 'doctor')).rejects.toBeInstanceOf(
       BadRequestException,
     )
+  })
+
+  it('throws Forbidden before the join window opens (> 5 min before start)', async () => {
+    // Starts in 10 minutes — outside the 5-minute lead.
+    prisma.appointment.findUnique.mockResolvedValue(apptWithSlot(10 * 60_000, 40 * 60_000))
+    prisma.user.findUnique.mockResolvedValue({
+      clerkId: CLERK_ID,
+      doctor: { id: 'doc-1', name: 'Dr. Alice' },
+    })
+
+    await expect(service.getLivekitToken(CLERK_ID, 'appt-1', 'doctor')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    )
+  })
+
+  it('throws Forbidden after the appointment has ended', async () => {
+    // Ended a minute ago.
+    prisma.appointment.findUnique.mockResolvedValue(apptWithSlot(-30 * 60_000, -60_000))
+    prisma.user.findUnique.mockResolvedValue({
+      clerkId: CLERK_ID,
+      doctor: { id: 'doc-1', name: 'Dr. Alice' },
+    })
+
+    await expect(service.getLivekitToken(CLERK_ID, 'appt-1', 'doctor')).rejects.toBeInstanceOf(
+      ForbiddenException,
+    )
+  })
+
+  it('allows joining within the 5-minute lead before start', async () => {
+    // Starts in 3 minutes — inside the lead window.
+    prisma.appointment.findUnique.mockResolvedValue(apptWithSlot(3 * 60_000, 33 * 60_000))
+    prisma.user.findUnique.mockResolvedValue({
+      clerkId: CLERK_ID,
+      doctor: { id: 'doc-1', name: 'Dr. Alice' },
+    })
+
+    const result = await service.getLivekitToken(CLERK_ID, 'appt-1', 'doctor')
+    expect(result.room).toBe(ROOM)
   })
 
   it('issues a scoped token for the owning doctor', async () => {
