@@ -58,6 +58,12 @@ services:
       - MODEL_PATH=/models/model.gguf
       - MOCK_MODE=${MOCK_MODE:-false}
       - N_GPU_LAYERS=${N_GPU_LAYERS:--1}
+      # Defaults to GPU 0. llama-cpp-python is CUDA-built and force-enumerates
+      # the GPU on load, hard-aborting (exit 139) if the CUDA context can't fit
+      # — e.g. when another workload is holding VRAM on a small card. When the
+      # GPU is busy, set CUDA_VISIBLE_DEVICES="" to enumerate 0 devices and fall
+      # back to CPU cleanly (the GPU reservation stays so libcuda.so.1 is linkable).
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES-0}
     deploy:
       resources:
         reservations:
