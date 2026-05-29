@@ -19,4 +19,7 @@ COPY apps/api ./apps/api
 WORKDIR /app/apps/api
 
 EXPOSE 3001
-CMD ["sh", "-c", "/app/node_modules/.bin/prisma generate && pnpm dev"]
+# `pnpm dev` runs `prisma generate` first (see apps/api package.json) so the
+# Prisma client is generated against the workspace-local @prisma/client the app
+# actually imports — not the root-hoisted copy.
+CMD ["sh", "-c", "pnpm dev"]

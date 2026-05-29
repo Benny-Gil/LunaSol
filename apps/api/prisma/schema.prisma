@@ -86,8 +86,8 @@ model Appointment {
   doctor    DoctorProfile      @relation(fields: [doctorId], references: [id])
   slotId    String             @unique
   slot      AvailabilitySlot   @relation(fields: [slotId], references: [id])
-  status    AppointmentStatus  @default(PENDING)
-  jitsiRoom String?
+  status      AppointmentStatus  @default(PENDING)
+  livekitRoom String?
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
   record    ConsultationRecord?

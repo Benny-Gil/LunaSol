@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { Calendar, Clock, Video } from 'lucide-react'
+import { Calendar, Clock } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
-  jitsiRoom: string | null
   doctor: { id: string; name: string; specialization: string; profilePictureUrl: string | null }
   slot: { startTime: string; endTime: string }
 }
@@ -131,7 +130,7 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', marginBottom: canCancel || appt.status === 'CONFIRMED' ? '16px' : '0' }}>
+      <div style={{ display: 'flex', gap: '20px', marginBottom: canCancel ? '16px' : '0' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
           <Calendar size={14} /> {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </span>
@@ -140,25 +139,15 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
         </span>
       </div>
 
-      {(canCancel || appt.status === 'CONFIRMED') && (
+      {canCancel && (
         <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-          {appt.status === 'CONFIRMED' && appt.jitsiRoom && (
-            <a
-              href={`/meet/${appt.jitsiRoom}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#059669', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}
-            >
-              <Video size={14} /> Join session
-            </a>
-          )}
-          {canCancel && (
-            <button
-              onClick={() => onCancel(appt.id)}
-              disabled={cancelling === appt.id}
-              style={{ padding: '8px 16px', background: 'none', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
-            >
-              {cancelling === appt.id ? 'Cancelling...' : 'Cancel'}
-            </button>
-          )}
+          <button
+            onClick={() => onCancel(appt.id)}
+            disabled={cancelling === appt.id}
+            style={{ padding: '8px 16px', background: 'none', border: '1px solid #fca5a5', borderRadius: '8px', fontSize: '13px', fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}
+          >
+            {cancelling === appt.id ? 'Cancelling...' : 'Cancel'}
+          </button>
         </div>
       )}
     </div>

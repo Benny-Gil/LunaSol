@@ -7,6 +7,7 @@ services:
       dockerfile: apps/web/Dockerfile.prod
       args:
         - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        - NEXT_PUBLIC_LIVEKIT_URL=${NEXT_PUBLIC_LIVEKIT_URL}
     container_name: lunasol-prod-web
     restart: unless-stopped
     environment:
@@ -30,6 +31,9 @@ services:
       - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET}
       - NODE_ENV=production
       - AI_SERVICE_URL=http://ai:8000
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+      - NEXT_PUBLIC_LIVEKIT_URL=${NEXT_PUBLIC_LIVEKIT_URL}
       - AI_ENABLED=${AI_ENABLED:-true}
     volumes:
       - uploads_data:/app/uploads

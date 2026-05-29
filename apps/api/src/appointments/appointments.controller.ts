@@ -26,6 +26,12 @@ export class AppointmentsController {
     return this.appointmentsService.getOne(req.user.id, id, req.user.role)
   }
 
+  @Roles('patient', 'doctor')
+  @Get(':id/livekit-token')
+  getLivekitToken(@Req() req: any, @Param('id') id: string) {
+    return this.appointmentsService.getLivekitToken(req.user.id, id, req.user.role)
+  }
+
   @Roles('patient')
   @Patch(':id/cancel')
   cancel(@Req() req: any, @Param('id') id: string) {
