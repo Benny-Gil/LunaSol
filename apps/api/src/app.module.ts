@@ -5,8 +5,10 @@ import { PatientsModule } from './patients/patients.module'
 import { DoctorsModule } from './doctors/doctors.module'
 import { AppointmentsModule } from './appointments/appointments.module'
 import { NotificationsModule } from './notifications/notifications.module'
+import { AiModule } from './ai/ai.module'
 
 @Module({
-  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, NotificationsModule],
+  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, NotificationsModule, AiModule],
 })
 export class AppModule {}
+

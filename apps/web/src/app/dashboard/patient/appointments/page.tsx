@@ -115,7 +115,7 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
   cancelling: string | null
   onClick: () => void
 }) {
-  const statusStyle = STATUS_COLORS[appt.status]
+  const statusStyle = STATUS_COLORS[appt.status] || { bg: '#f3f4f6', text: '#374151' }
   const date = new Date(appt.slot.startTime)
   const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED'
 
