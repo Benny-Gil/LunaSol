@@ -1,6 +1,6 @@
 FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 ENV PNPM_CONFIG_TRUST_LOCKFILE=true
 
 WORKDIR /app
@@ -28,8 +28,12 @@ RUN pnpm build
 
 FROM node:22-alpine AS runner
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.3.0 --activate
 ENV PNPM_CONFIG_TRUST_LOCKFILE=true
+# Prevent pnpm from re-verifying/installing deps at container start. The image is
+# built with `--prod`, which pnpm's verify-deps-before-run otherwise treats as
+# out-of-sync and "fixes" by running a full network install on every boot.
+ENV PNPM_CONFIG_VERIFY_DEPS_BEFORE_RUN=false
 ENV NODE_ENV=production
 
 WORKDIR /app
@@ -47,4 +51,7 @@ COPY packages/types ./packages/types
 WORKDIR /app/apps/web
 
 EXPOSE 3000
-CMD ["pnpm", "start"]
+# Invoke the Next.js binary directly rather than via `pnpm start`, so no pnpm
+# dependency verification/install runs at container startup (avoids boot-time
+# network calls to the npm registry).
+CMD ["/app/apps/web/node_modules/.bin/next", "start", "--port", "3000"]
