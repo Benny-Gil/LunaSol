@@ -1,0 +1,16 @@
+# LiveKit server config for LunaSol.
+# API keys are NOT stored here — they are injected at runtime via the
+# LIVEKIT_KEYS environment variable (see docker-compose*.yml) so secrets
+# stay out of version control.
+
+port: 7880 # signaling / WebSocket (proxied by Nginx at /meet)
+
+rtc:
+  tcp_port: 7881 # WebRTC over TCP — fallback when UDP is blocked
+  port_range_start: 50000 # WebRTC media (UDP)
+  port_range_end: 50100
+  use_external_ip: true
+
+# Quiet, structured logs
+logging:
+  level: info
