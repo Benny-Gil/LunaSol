@@ -263,7 +263,7 @@ async function main() {
         doctorId: doctorProfiles[i]!.id,
         slotId: slot.id,
         status: AppointmentStatus.CONFIRMED,
-        jitsiRoom: `lunasol-${doctorProfiles[i]!.id.slice(-6)}-${patientProfiles[i]!.id.slice(-6)}`,
+        livekitRoom: `appt-${doctorProfiles[i]!.id.slice(-6)}-${patientProfiles[i]!.id.slice(-6)}`,
       },
     });
     confirmedAppointments.push(appointment);
@@ -335,7 +335,7 @@ async function main() {
         doctorId: doctorProfiles[i]!.id,
         slotId: pastSlots[i]!.id,
         status: AppointmentStatus.COMPLETED,
-        jitsiRoom: `lunasol-past-${i + 1}`,
+        livekitRoom: `appt-past-${i + 1}`,
         record: {
           create: {
             notes: consultationData[i]!.notes,
