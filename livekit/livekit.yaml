@@ -13,10 +13,12 @@ rtc:
 
 # Server events (e.g. participant_joined) POSTed to the API on the internal
 # Docker network. `api_key` selects which configured key signs the webhook JWT,
-# so it must equal LIVEKIT_API_KEY for the environment (dev default: devkey);
-# the API verifies with the matching secret. See LivekitWebhookController.
+# so it must equal LIVEKIT_API_KEY. The key id is a public identifier (not a
+# secret), so we use the same id (`lunasol`) in every environment and only vary
+# LIVEKIT_API_SECRET. The API verifies with the matching secret. See
+# LivekitWebhookController.
 webhook:
-  api_key: devkey
+  api_key: lunasol
   urls:
     - http://api:3001/api/livekit/webhook
 
