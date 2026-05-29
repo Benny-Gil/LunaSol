@@ -35,6 +35,12 @@ One service handles everything:
 
 Exposed internally only. Nginx proxies WebSocket connections at `/meet/*` to the LiveKit server.
 
+**Production networking note:** Nginx proxies only the *signaling* WebSocket. WebRTC
+**media** flows over UDP (ports `50000–50100`) with a TCP fallback on `7881`, both exposed
+on the host. UDP does not traverse a Cloudflare Tunnel cleanly, so a production deployment
+relies on the TCP fallback / a TURN setup, or on exposing the RTC ports directly. Local dev
+(single host) is unaffected.
+
 ---
 
 ## Room Lifecycle
@@ -96,6 +102,10 @@ When the doctor leaves the session, the `useRoomContext()` hook fires a `disconn
 
 | Variable             | Purpose                          |
 | -------------------- | -------------------------------- |
-| `LIVEKIT_API_KEY`    | Token signing key name           |
-| `LIVEKIT_API_SECRET` | Token signing secret             |
-| `LIVEKIT_URL`        | WebSocket URL (`ws://livekit:7880`) used by the frontend |
+| `LIVEKIT_API_KEY`    | Token signing key name (NestJS + LiveKit server) |
+| `LIVEKIT_API_SECRET` | Token signing secret (NestJS + LiveKit server)   |
+| `NEXT_PUBLIC_LIVEKIT_URL` | **Browser-facing** WebSocket URL — reaches LiveKit through Nginx at `/meet`, not the internal hostname. `ws://localhost:81/meet` (dev) / `wss://<domain>/meet` (prod) |
+
+> The browser never talks to `livekit:7880` directly — that hostname only resolves on
+> the internal Docker network. All client connections go through Nginx's `/meet` route,
+> so the frontend `serverUrl` must be the public `NEXT_PUBLIC_LIVEKIT_URL`.

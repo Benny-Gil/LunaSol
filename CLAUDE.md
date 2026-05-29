@@ -49,7 +49,7 @@ Three runtime services behind a single Nginx entry point:
 Browser → Cloudflare Tunnel → Nginx :80
   /        → web  (Next.js  :3000)
   /api/*   → api  (NestJS   :3001)
-  /meet/*  → jitsi
+  /meet/*  → livekit (LiveKit :7880, WebSocket upgrade)
 ```
 
 `api` communicates with `ai` (FastAPI :8000) and `db` (Postgres :5432) over the internal Docker network — neither is publicly reachable.

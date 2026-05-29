@@ -26,6 +26,14 @@ Progress against the planned feature set. Updated as of the current state of `ma
 - [x] Patient appointments list + appointment detail page
 - [x] Patient medical records page (consultation records + prescriptions, read-only)
 
+### Video Consultation (LiveKit)
+- [x] Self-hosted `livekit-server` Docker service (dev + prod) behind Nginx `/meet` (WebSocket upgrade)
+- [x] `livekitRoom` populated on appointment confirm (renamed from legacy `jitsiRoom`)
+- [x] `GET /api/appointments/:id/livekit-token` — server-side token via `livekit-server-sdk`, scoped to the appointment room, 15 min TTL, patient/doctor only
+- [x] Reusable `<ConsultationSession>` — native `@livekit/components-react` UI, no iframe
+- [x] Patient appointment detail page with windowed "Join Session"
+- [x] Doctor appointments list + detail page — confirm/complete, join, post-session notes prompt
+
 ### Notifications
 - [x] Socket.io gateway with per-user rooms
 - [x] `appointment.booked` / `appointment.status_changed` events emitted from appointments service
@@ -48,15 +56,9 @@ Progress against the planned feature set. Updated as of the current state of `ma
 
 ## In Progress / Up Next
 
-### Video Consultation (LiveKit)
-- [ ] `GET /api/appointments/:id/livekit-token` — server-side token generation via `livekit-server-sdk`, scoped to appointment room, 15 min TTL
-- [ ] `livekitRoom` field population on appointment confirm
-- [ ] Patient consultation room UI — `@livekit/components-react` inside the appointment detail page
-- [ ] Doctor consultation room UI — join/leave, post-session prompt for notes
-
 ### Doctor Dashboard
-- [ ] Doctor appointments list (upcoming, past)
-- [ ] Appointment detail page (doctor view) — confirm/complete actions, patient info
+- [x] Doctor appointments list (upcoming, past) with confirm/complete actions
+- [x] Appointment detail page (doctor view) — confirm/complete, join session, patient info
 
 ### Consultation Records & Prescriptions
 - [ ] `POST /api/consultations` — create record after session ends (doctor only)
