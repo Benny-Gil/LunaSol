@@ -35,7 +35,10 @@ export class ClerkAuthGuard implements CanActivate {
       request.user = {
         id: decoded.sub, // Clerk user ID
         email: (decoded as any).email || (decoded as any).primaryEmailAddress || '',
-        role: (decoded as any).role || (decoded as any).metadata?.role || (decoded as any).publicMetadata?.role || 'patient',
+        // Do NOT default the role. A missing role must fall through to RoleGuard
+        // (-> 403), never silently become 'patient' — that would grant a
+        // doctor the wrong identity on patient-or-doctor routes.
+        role: (decoded as any).role || (decoded as any).metadata?.role || (decoded as any).publicMetadata?.role,
         claims: decoded,
       }
       return true

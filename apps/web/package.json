@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",
+    "@livekit/components-react": "^2.9.21",
+    "@livekit/components-styles": "^1.2.0",
     "@lunasol/types": "workspace:*",
+    "livekit-client": "^2.19.0",
     "lucide-react": "^1.16.0",
     "next": "14.2.29",
     "react": "^18.3.1",
@@ -19,15 +22,15 @@
     "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
     "@types/node": "^22.15.21",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.7",
-    "typescript": "^5.8.3",
-    "vitest": "^3.0.7",
-    "@testing-library/react": "^16.2.0",
-    "@testing-library/dom": "^10.4.0",
-    "@testing-library/jest-dom": "^6.6.3",
+    "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^26.0.0",
-    "@vitejs/plugin-react": "^4.3.4"
+    "typescript": "^5.8.3",
+    "vitest": "^3.0.7"
   }
 }

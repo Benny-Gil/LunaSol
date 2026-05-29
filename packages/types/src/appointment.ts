@@ -13,7 +13,7 @@ export interface Appointment {
   doctorId: string
   slotId: string
   status: AppointmentStatus
-  jitsiRoom?: string
+  livekitRoom?: string
   createdAt: string
   updatedAt: string
 }

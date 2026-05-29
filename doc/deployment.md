@@ -29,7 +29,6 @@
 | `ai`          | FastAPI + llama-cpp    | internal          | No                   |
 | `db`          | postgres:16            | internal          | No                   |
 | `pgadmin`     | dpage/pgadmin4         | internal          | Via Nginx `/pgadmin` |
-| `livekit`     | livekit/livekit-server | internal          | Via Nginx `/meet`    |
 | `nginx`       | nginx:alpine           | internal + tunnel | Entry point          |
 | `cloudflared` | cloudflare/cloudflared | internal          | Tunnel daemon        |
 
@@ -49,14 +48,6 @@ server {
 
     location /api {
         proxy_pass http://api:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-    }
-
-    location /meet {
-        proxy_pass http://livekit:7880;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";

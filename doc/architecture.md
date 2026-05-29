@@ -16,11 +16,13 @@ LunaSol is a full-stack telehealth web application split across three runtime se
 [Nginx :80]
     ├── /          →  web      (Next.js   :3000)
     ├── /api/*     →  api      (NestJS    :3001)   ← WebSocket upgrade for Socket.io
-    ├── /meet/*    →  livekit  (LiveKit   :7880)   ← WebSocket upgrade
     └── /pgadmin   →  pgadmin  (pgAdmin   :5050)
 
 [api] ── internal Docker network ──► [ai]       (FastAPI   :8000)   ← never public
 [api] ── internal Docker network ──► [db]       (Postgres  :5432)   ← never public
+
+[browser] ── WebRTC (signaling + media) ──► [LiveKit Cloud]   ← video, direct (not via tunnel)
+[LiveKit Cloud] ── webhook ──► [api] /api/livekit/webhook
 ```
 
 ## Monorepo Structure

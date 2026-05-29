@@ -5,13 +5,14 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { ArrowLeft, Calendar, Clock, User, Video } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import ConsultationSession from '@/components/ConsultationSession'
 import ConsultationPanel from './ConsultationPanel'
 import PatientHistory from './PatientHistory'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
-  jitsiRoom: string | null
+  livekitRoom: string | null
   patient: { id: string; name: string; profilePictureUrl: string | null }
   slot: { startTime: string; endTime: string }
 }
@@ -23,6 +24,9 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   COMPLETED: { bg: '#f3f4f6', text: '#374151' },
 }
 
+// Join is allowed from 5 minutes before the slot start until the slot ends.
+const JOIN_LEAD_MS = 5 * 60 * 1000
+
 export default function DoctorAppointmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -30,6 +34,8 @@ export default function DoctorAppointmentDetailPage() {
   const [appt, setAppt] = useState<Appointment | null>(null)
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState(false)
+  const [inSession, setInSession] = useState(false)
+  const [now, setNow] = useState(() => Date.now())
 
   const load = useCallback(async () => {
     try {
@@ -45,6 +51,12 @@ export default function DoctorAppointmentDetailPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Keep the join window accurate without a manual refresh.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(t)
+  }, [])
+
   async function act(action: 'confirm' | 'complete') {
     setActing(true)
     try {
@@ -58,8 +70,17 @@ export default function DoctorAppointmentDetailPage() {
     }
   }
 
+  if (inSession && appt) {
+    // Re-fetch on leave so a status change (e.g. completed) is reflected.
+    return <ConsultationSession appointmentId={appt.id} onLeave={() => { setInSession(false); load() }} />
+  }
+
   const date = appt ? new Date(appt.slot.startTime) : null
   const statusStyle = appt ? STATUS_COLORS[appt.status] : null
+  const start = appt ? new Date(appt.slot.startTime).getTime() : 0
+  const end = appt ? new Date(appt.slot.endTime).getTime() : 0
+  const withinWindow = now >= start - JOIN_LEAD_MS && now <= end
+  const canJoin = appt?.status === 'CONFIRMED' && !!appt.livekitRoom && withinWindow
 
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#f9fafb', minHeight: '100vh' }}>
@@ -122,14 +143,13 @@ export default function DoctorAppointmentDetailPage() {
                 )}
                 {appt.status === 'CONFIRMED' && (
                   <>
-                    {appt.jitsiRoom && (
-                      <a
-                        href={`/meet/${appt.jitsiRoom}`}
-                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: '#059669', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}
-                      >
-                        <Video size={16} /> Join session
-                      </a>
-                    )}
+                    <button
+                      onClick={() => setInSession(true)}
+                      disabled={!canJoin}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: canJoin ? '#059669' : '#e5e7eb', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: canJoin ? '#ffffff' : '#9ca3af', cursor: canJoin ? 'pointer' : 'not-allowed' }}
+                    >
+                      <Video size={16} /> Join session
+                    </button>
                     <button
                       onClick={() => act('complete')}
                       disabled={acting}
@@ -140,6 +160,11 @@ export default function DoctorAppointmentDetailPage() {
                   </>
                 )}
               </div>
+              {appt.status === 'CONFIRMED' && !canJoin && (
+                <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '12px' }}>
+                  The session opens from {new Date(start - JOIN_LEAD_MS).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} on the day of the appointment.
+                </p>
+              )}
             </div>
 
             {(appt.status === 'CONFIRMED' || appt.status === 'COMPLETED') && (
