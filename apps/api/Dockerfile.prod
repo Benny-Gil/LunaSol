@@ -16,6 +16,9 @@ COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY apps/api ./apps/api
 
+WORKDIR /app
+RUN pnpm --filter @lunasol/types build
+
 WORKDIR /app/apps/api
 RUN /app/node_modules/.bin/prisma generate
 RUN pnpm build

@@ -16,6 +16,9 @@ COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY apps/web ./apps/web
 
+WORKDIR /app
+RUN pnpm --filter @lunasol/types build
+
 WORKDIR /app/apps/web
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
