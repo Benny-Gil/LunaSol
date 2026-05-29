@@ -9,6 +9,9 @@ export class AiService {
     payload: { symptoms?: string; messages?: { role: string; content: string }[] },
     doctors: AiDoctorSummary[]
   ): Promise<Response> {
+    if (process.env.AI_ENABLED === 'false') {
+      throw new InternalServerErrorException('AI service is disabled')
+    }
     try {
       const response = await fetch(`${this.aiServiceUrl}/recommend`, {
         method: 'POST',
