@@ -102,12 +102,12 @@ export class AppointmentsService {
     }
   }
 
-  async listMine(clerkId: string, role: string) {
+  async listMine(clerkId: string, role: string, patientId?: string) {
     if (role === 'doctor') {
       const { doctor } = await this.getDoctorProfile(clerkId)
       return this.prisma.appointment.findMany({
-        where: { doctorId: doctor.id },
-        include: { slot: true, patient: true },
+        where: { doctorId: doctor.id, ...(patientId ? { patientId } : {}) },
+        include: { slot: true, patient: true, record: { include: { prescriptions: true } } },
         orderBy: { slot: { startTime: 'asc' } },
       })
     }

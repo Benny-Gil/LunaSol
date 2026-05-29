@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common'
 import { createClerkClient } from '@clerk/backend'
 import { PrismaService } from '../prisma/prisma.service'
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto'
+import { CreateAvailabilitySlotDto } from './dto/create-availability-slot.dto'
 
 @Injectable()
 export class DoctorsService {
@@ -164,5 +171,80 @@ export class DoctorsService {
 
     const profileComplete = !!updated.bio && updated.bio.trim().length > 0
     return { ...updated, profileComplete }
+  }
+
+  // ─── Availability (doctor-owned) ──────────────────────────────────────────
+
+  async listOwnAvailability(clerkId: string) {
+    const user = await this.ensureDoctorRecord(clerkId)
+    return this.prisma.availabilitySlot.findMany({
+      where: { doctorId: user.doctor!.id },
+      include: { appointment: { select: { id: true, status: true } } },
+      orderBy: { startTime: 'asc' },
+    })
+  }
+
+  async createAvailabilitySlot(clerkId: string, dto: CreateAvailabilitySlotDto) {
+    const user = await this.ensureDoctorRecord(clerkId)
+    const doctorId = user.doctor!.id
+
+    const startTime = new Date(dto.startTime)
+    const endTime = new Date(dto.endTime)
+
+    if (endTime <= startTime) {
+      throw new BadRequestException('endTime must be after startTime')
+    }
+    if (startTime <= new Date()) {
+      throw new BadRequestException('Cannot create a slot in the past')
+    }
+
+    // Reject slots that overlap an existing one for this doctor.
+    const overlap = await this.prisma.availabilitySlot.findFirst({
+      where: {
+        doctorId,
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+      },
+    })
+    if (overlap) {
+      throw new ConflictException('Slot overlaps an existing slot')
+    }
+
+    return this.prisma.availabilitySlot.create({
+      data: { doctorId, startTime, endTime },
+    })
+  }
+
+  private async getOwnSlot(clerkId: string, slotId: string) {
+    const user = await this.ensureDoctorRecord(clerkId)
+    const slot = await this.prisma.availabilitySlot.findUnique({
+      where: { id: slotId },
+      include: { appointment: { select: { id: true, status: true } } },
+    })
+    if (!slot) throw new NotFoundException('Slot not found')
+    if (slot.doctorId !== user.doctor!.id) {
+      throw new ForbiddenException('Not your slot')
+    }
+    return slot
+  }
+
+  async setSlotBlocked(clerkId: string, slotId: string, isBlocked: boolean) {
+    const slot = await this.getOwnSlot(clerkId, slotId)
+    if (slot.appointment) {
+      throw new ConflictException('Cannot block a slot that has a booked appointment')
+    }
+    return this.prisma.availabilitySlot.update({
+      where: { id: slot.id },
+      data: { isBlocked },
+    })
+  }
+
+  async deleteAvailabilitySlot(clerkId: string, slotId: string) {
+    const slot = await this.getOwnSlot(clerkId, slotId)
+    if (slot.appointment) {
+      throw new ConflictException('Cannot delete a slot that has a booked appointment')
+    }
+    await this.prisma.availabilitySlot.delete({ where: { id: slot.id } })
+    return { id: slot.id, deleted: true }
   }
 }

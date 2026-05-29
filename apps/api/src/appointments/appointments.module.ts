@@ -8,5 +8,6 @@ import { NotificationsModule } from '../notifications/notifications.module'
   imports: [NotificationsModule],
   controllers: [AppointmentsController, LivekitWebhookController],
   providers: [AppointmentsService],
+  exports: [AppointmentsService],
 })
 export class AppointmentsModule {}
