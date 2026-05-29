@@ -65,7 +65,7 @@ erDiagram
         string doctorId FK
         string slotId FK, UK
         AppointmentStatus status
-        string jitsiRoom
+        string livekitRoom
         datetime createdAt
         datetime updatedAt
     }
@@ -159,7 +159,7 @@ patientId       String    FK → PatientProfile
 doctorId        String    FK → DoctorProfile
 slotId          String    FK → AvailabilitySlot
 status          AppointmentStatus  (PENDING | CONFIRMED | CANCELLED | COMPLETED)
-jitsiRoom       String?
+livekitRoom     String?
 createdAt       DateTime
 updatedAt       DateTime
 ```
@@ -214,9 +214,9 @@ Availability could have been modeled as a simple schedule config (e.g., "Mondays
 - Booked slots need to reference a specific slot ID on the Appointment
 - Querying available slots for a date range is a simple `WHERE isBlocked = false AND id NOT IN (booked slots)`
 
-### jitsiRoom stored on Appointment, not a separate table
+### livekitRoom stored on Appointment, not a separate table
 
-A Jitsi room name is a short string (`appt-<uuid>`) generated once when the appointment is confirmed. There's no additional metadata to store, no lifecycle of its own, and no need to join to another table. Storing it directly on `Appointment` is the simplest correct approach.
+A LiveKit room name is a short string (`appt-<uuid>`) generated once when the appointment is confirmed. There's no additional metadata to store, no lifecycle of its own, and no need to join to another table. Storing it directly on `Appointment` is the simplest correct approach.
 
 ### Appointment status uses an enum, not a boolean
 
