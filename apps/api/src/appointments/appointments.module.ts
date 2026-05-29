@@ -7,5 +7,6 @@ import { NotificationsModule } from '../notifications/notifications.module'
   imports: [NotificationsModule],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
+  exports: [AppointmentsService],
 })
 export class AppointmentsModule {}
