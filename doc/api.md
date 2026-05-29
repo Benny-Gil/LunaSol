@@ -120,3 +120,36 @@ GET /api/doctors?cursor=<lastId>&limit=20
 ```
 
 Response includes `nextCursor` when more results exist. Offset pagination is avoided — it performs poorly on large tables and produces inconsistent results when records are inserted between pages.
+
+---
+
+## AI Triage Streaming & Fallback
+
+### Streaming Triage Endpoint (SSE)
+
+```
+GET /api/ai/recommend?q=<symptoms>&history=<json_messages>
+```
+
+*   **Public Route**: Decorated with `@Public()` to allow public doctor discovery.
+*   **Parameters**:
+    *   `q` (string, optional): Current symptom query.
+    *   `history` (string, optional): URL-encoded JSON string containing the chat history array of past messages (e.g. `[{"role":"user","content":"..."},{"role":"assistant","content":"..."}]`).
+*   **Response Type**: `text/event-stream`
+
+### Stream Flow
+
+1.  **Emergency Validation**: The query text and history are checked locally for critical medical emergency keywords (e.g., `chest pain`, `cannot breathe`). If matched, a `⚠️ EMERGENCY NOTICE` is immediately sent to the client.
+2.  **FastAPI Forwarding**: The NestJS gateway retrieves the listing of active doctors, then opens a streaming HTTP connection to the FastAPI inference service (`/recommend`) passing symptoms, chat history, and compact doctor profiles.
+3.  **SSE Relaying**: It parses and relays the FastAPI stream:
+    *   `event: reasoning` chunks containing MedGemma reasoning tokens are streamed in real time.
+    *   `event: doctors` containing enriched database matching doctor entries (mapped via the model's suggested doctor IDs and reasoning) is emitted.
+    *   `event: done` is emitted upon completion.
+
+### Local Fuzzy Fallback
+
+If the FastAPI inference service is offline or throws an error:
+1.  NestJS catches the stream error and emits a fallback warning message in the reasoning stream.
+2.  The query is tokenized, spelling errors/typos are handled via Levenshtein edit distance logic, and words are compared against a pre-defined dictionary of medical specializations (e.g., Cardiology, Dermatology, Neurology, Orthopedics, Pediatrics, Psychiatry, Family Medicine).
+3.  Matching doctors are sorted based on keyword match score and returned directly under the `doctors` event, ensuring service resilience.
+

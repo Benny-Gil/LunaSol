@@ -1,39 +1,54 @@
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import List, Dict
-import asyncio
 
-app = FastAPI(title="LunaSol AI Service Mock")
+from src.schemas import RecommendRequest
+from src.model import load_model, unload_model, get_model
+from src.triage import mock_recommendation_stream, real_recommendation_stream
 
-class Doctor(BaseModel):
-    id: str
-    name: str
-    specialization: str
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_model()
+    yield
+    unload_model()
 
-class RecommendRequest(BaseModel):
-    symptoms: str
-    doctors: List[Doctor]
-
-async def mock_recommendation_stream(symptoms: str, doctors: List[Doctor]):
-    yield "data: Starting AI analysis of symptoms...\n\n"
-    await asyncio.sleep(0.5)
-    yield f"data: Received symptoms: '{symptoms}'\n\n"
-    await asyncio.sleep(0.5)
-    yield "data: Matching available doctors...\n\n"
-    await asyncio.sleep(0.5)
-    for doc in doctors:
-        yield f"data: Recommendation: {doc.name} ({doc.specialization}) - highly relevant specialization for matching symptoms.\n\n"
-        await asyncio.sleep(0.5)
-    yield "data: [DONE]\n\n"
+app = FastAPI(title="LunaSol AI Recommendation Service", lifespan=lifespan)
 
 @app.post("/recommend")
 async def recommend(request: RecommendRequest):
-    return StreamingResponse(
-        mock_recommendation_stream(request.symptoms, request.doctors),
-        media_type="text/event-stream"
-    )
+    mock_mode = os.getenv("MOCK_MODE", "false").lower() == "true"
+    model = get_model()
+    
+    # Extract messages or convert legacy symptoms input to a single message list
+    if request.messages:
+        messages = request.messages
+    else:
+        from src.schemas import ChatMessage
+        messages = [ChatMessage(role="user", content=request.symptoms or "")]
+        
+    if mock_mode or model is None:
+        return StreamingResponse(
+            mock_recommendation_stream(messages, request.doctors),
+            media_type="text/event-stream"
+        )
+    else:
+        return StreamingResponse(
+            real_recommendation_stream(messages, request.doctors, model),
+            media_type="text/event-stream"
+        )
+
+@app.get("/health")
+def health():
+    mock_mode = os.getenv("MOCK_MODE", "false").lower() == "true"
+    model = get_model()
+    return {
+        "status": "ok",
+        "model_loaded": model is not None,
+        "mock_mode": mock_mode,
+        "model_path": os.getenv("MODEL_PATH", "/models/model.gguf")
+    }
 
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "LunaSol AI Service Mock is running"}
+    return {"status": "ok", "message": "LunaSol AI Service is running"}

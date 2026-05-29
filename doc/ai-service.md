@@ -28,7 +28,29 @@
 - No separate daemon process (unlike Ollama)
 - GGUF format is widely supported and models are available at various quantization levels to balance quality vs. speed
 
-**Model:** A quantized GGUF model (e.g., Qwen-2.5-1.5B-Instruct-Q4_K_M) is used. Smaller quantized models are chosen to keep inference fast on CPU hardware. The model file is not bundled in the Docker image — it is mounted from the host at `/models/model.gguf`.
+**Model:** [MedGemma 1.5 4B IT](https://huggingface.co/google/medgemma-1.5-4b-it) — a medical-domain instruction-tuned model by Google, quantized to **IQ4_XS** GGUF format (`medgemma-1.5-4b-it-IQ4_XS.gguf`, ~2.2 GB). Built on Gemma 3 architecture with 4B parameters, 128K context window, and grouped-query attention. The model file is not bundled in the Docker image — it is mounted from the host at `/models/model.gguf`.
+
+### Why MedGemma
+
+- **Medical domain fine-tuning**: Trained on clinical text and medical image-text pairs — significantly better at symptom analysis and doctor-specialization matching than general-purpose models of the same size
+- **Right-sized for the hardware**: At 2.2 GB (IQ4_XS), it fits entirely in the server's 4 GB GTX 1650 VRAM with headroom to spare
+- **Gemma 3 architecture**: Modern architecture with grouped-query attention, efficient inference
+- **Privacy-first**: Runs fully local — patient symptom data never leaves the server
+
+### Quantization Choice: IQ4_XS
+
+IQ4_XS is an importance-matrix quantization at ~4.25 bits per weight. It offers a good balance:
+
+| Quant | File Size | Quality | Speed |
+|---|---|---|---|
+| Q8_0 | ~4.5 GB | Best | ❌ Won't fit in 4 GB VRAM |
+| Q5_K_M | ~3.1 GB | Very good | ⚠️ Tight fit, no headroom |
+| **IQ4_XS** | **~2.2 GB** | **Good** | **✅ Fits with ~1.8 GB headroom** |
+| IQ2_XS | ~1.2 GB | Degraded | Too lossy for medical use |
+
+For a symptom → doctor matching task (short prompts, short responses), IQ4_XS retains sufficient reasoning quality while keeping inference fast.
+
+> **Note**: MedGemma is also multimodal (vision), but loading the vision projector (`mmproj`) is not needed for our text-only symptom analysis use case. We load only the text GGUF to save memory and reduce startup time.
 
 ---
 
@@ -95,11 +117,72 @@ If FastAPI is unavailable or returns an error, NestJS returns all doctors as a f
 
 ## Docker Volume for Model File
 
-The GGUF model file is large (1–4 GB depending on quantization) and changes independently of the code. It is:
+The GGUF model file (~2.2 GB) changes independently of the code. It is:
 
-- Stored on the host at `/data/models/model.gguf`
+- Stored on the host (e.g. project root during dev, `/data/models/` in production)
 - Mounted into the `ai` container at `/models/model.gguf`
-- **Never committed to the repository**
+- **Never committed to the repository** (listed in `.gitignore`)
 - **Never baked into the Docker image**
 
 This means the image stays small and rebuilding the image does not require re-downloading the model.
+
+---
+
+## Hardware Analysis & Capacity Planning
+
+### Server Specs
+
+| Component | Spec |
+|---|---|
+| CPU | AMD Ryzen 5 2600 — 6 cores / 12 threads @ 3.4 GHz |
+| RAM | 16 GB DDR4 (~6.3 GB available at runtime) |
+| GPU | NVIDIA GeForce GTX 1650 — 4 GB VRAM (Turing, compute capability 7.5) |
+| Disk | 115 GB SSD (~40 GB free) |
+| OS | Arch Linux, kernel 6.18 LTS |
+
+### MedGemma IQ4_XS on This Hardware
+
+| Metric | Value |
+|---|---|
+| Model file size | 2.2 GB |
+| VRAM required (full offload) | ~2.2 GB + ~200 MB KV cache |
+| VRAM remaining | ~1.6 GB (for OS/display/other) |
+| Fits entirely in GPU? | **✅ Yes** |
+| `n_gpu_layers` | All layers (full GPU offload) |
+| Estimated throughput | **~20–30 tok/s** (full GPU) |
+| Context window (usable) | 2048–4096 tokens (limited by VRAM for KV cache; model supports 128K natively but KV cache for that won't fit) |
+
+### Request Characteristics
+
+For the doctor recommendation use case, each request is lightweight:
+
+| Metric | Estimate |
+|---|---|
+| System prompt + doctor list | ~200–400 tokens |
+| Patient symptom input | ~50–150 tokens |
+| Model response | ~200–400 tokens |
+| **Total per request** | **~500–900 tokens** |
+| **Time per request** | **~15–30 seconds** (at ~20 tok/s generation) |
+
+### Concurrent User Capacity
+
+`llama-cpp-python` processes inference requests **sequentially** — there is no request batching. Concurrent requests queue up.
+
+| Concurrent Users | Behavior | Wait Time (worst case) |
+|---|---|---|
+| **1** | Immediate response | ~20s |
+| **2** | Second user waits for first | ~40s |
+| **3** | Third user waits for both | ~60s |
+| **5+** | Queueing becomes painful | 100s+ |
+
+**Realistic capacity: 1–2 concurrent users with acceptable UX.**
+
+The SSE streaming pattern helps significantly — the first tokens appear within ~2 seconds, so the user sees activity immediately even if the full response takes 20s. This makes the perceived latency much better than a blocking HTTP request.
+
+### Operational Notes
+
+- **GPU memory is shared with the display server**: If running a desktop environment, ~200–500 MB of VRAM is consumed by the compositor. Consider running the server headless for maximum inference headroom.
+- **Swap is fully used** (512 MB): The system is memory-constrained. Avoid running other heavy services alongside inference.
+- **Model startup time**: First load takes ~5–10 seconds as the model is memory-mapped from disk. Subsequent requests reuse the loaded model.
+- **`n_ctx` configuration**: Set to 2048 for our use case (doctor recommendations with short prompts). Higher values consume more VRAM for the KV cache. At `n_ctx=4096`, expect ~400 MB additional VRAM usage.
+- **Temperature**: Use a low temperature (0.3–0.5) for medical recommendations to reduce hallucination risk. The model's outputs are triage suggestions, not diagnoses.

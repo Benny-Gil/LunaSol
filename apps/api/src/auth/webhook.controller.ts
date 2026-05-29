@@ -44,7 +44,7 @@ export class WebhookController {
         'svix-timestamp': svixTimestamp,
         'svix-signature': svixSignature,
       }) as any
-    } catch (err) {
+    } catch {
       throw new BadRequestException('Invalid webhook signature')
     }
 
@@ -116,7 +116,7 @@ export class WebhookController {
         await this.prisma.user.delete({
           where: { clerkId },
         })
-      } catch (err) {
+      } catch {
         // If user was already deleted, ignore error
         console.warn(`Attempted to delete non-existent user with clerkId ${clerkId} from DB`)
       }

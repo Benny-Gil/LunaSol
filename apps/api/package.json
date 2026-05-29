@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nest start --watch",
+    "dev": "pnpm --filter @lunasol/types build && nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
     "lint": "eslint src --ext .ts",
