@@ -127,15 +127,27 @@ export class AiController {
             const queryLower = userTexts.toLowerCase()
             const tokens = queryLower.split(/[^a-zA-Z]+/g).filter(t => t.length > 2)
 
+            // Keys MUST match the lowercased specialization strings in
+            // apps/web/src/lib/specializations.ts so scores.get(specLower) resolves.
             const SPECIALIZATION_KEYWORDS: Record<string, string[]> = {
+              'allergy & immunology': ['allergy', 'allergic', 'hives', 'asthma', 'sneeze', 'sneezing', 'hay fever', 'anaphylaxis', 'food allergy', 'eczema', 'sinus', 'congestion', 'immune', 'autoimmune', 'wheeze', 'pollen', 'rhinitis'],
               cardiology: ['chest', 'heart', 'palpitation', 'pressure', 'cardio', 'pulse', 'bp', 'cardiac', 'angina', 'artery', 'vein', 'hypertension', 'arrhythmia', 'valve', 'murmur', 'bypass', 'cardiovascular'],
               dermatology: ['skin', 'rash', 'itch', 'acne', 'eczema', 'dermatitis', 'lesion', 'spot', 'hives', 'burn', 'mole', 'wrinkle', 'dermal', 'psoriasis', 'blister', 'wart', 'allergy'],
+              endocrinology: ['diabetes', 'thyroid', 'hormone', 'insulin', 'sugar', 'glucose', 'metabolism', 'weight', 'fatigue', 'thirst', 'adrenal', 'cortisol', 'goiter', 'hypothyroid', 'hyperthyroid', 'menopause', 'cholesterol'],
+              'family medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness'],
+              gastroenterology: ['stomach', 'belly', 'abdominal', 'abdomen', 'nausea', 'vomit', 'diarrhea', 'constipation', 'heartburn', 'reflux', 'bloating', 'gut', 'bowel', 'intestine', 'liver', 'ulcer', 'indigestion', 'gastric', 'gas'],
+              'general medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness'],
               neurology: ['headache', 'migraine', 'brain', 'nerve', 'numb', 'tingle', 'dizzy', 'vertigo', 'seizure', 'paralysis', 'stroke', 'coma', 'tremor', 'neuropathic', 'spinal', 'concussion', 'neuralgia'],
+              'obstetrics & gynecology': ['pregnancy', 'pregnant', 'period', 'menstrual', 'menstruation', 'cramps', 'vaginal', 'ovary', 'ovarian', 'uterus', 'cervical', 'fertility', 'contraception', 'pelvic', 'menopause', 'gynecological', 'prenatal'],
+              oncology: ['cancer', 'tumor', 'tumour', 'lump', 'mass', 'oncology', 'chemotherapy', 'chemo', 'malignant', 'metastasis', 'biopsy', 'lymphoma', 'leukemia', 'carcinoma'],
+              ophthalmology: ['eye', 'eyes', 'vision', 'blurry', 'blurred', 'sight', 'blind', 'cataract', 'glaucoma', 'retina', 'eyesight', 'visual', 'redeye', 'floaters', 'dry eye'],
               orthopedics: ['bone', 'joint', 'muscle', 'fracture', 'sprain', 'knee', 'shoulder', 'back', 'spine', 'hip', 'pain', 'arthritis', 'tendon', 'ligament', 'scoliosis', 'skeletal', 'cartilage', 'disc'],
+              'otolaryngology (ent)': ['ear', 'nose', 'throat', 'sinus', 'hearing', 'tinnitus', 'tonsil', 'tonsillitis', 'sinusitis', 'hoarse', 'voice', 'swallow', 'snoring', 'earache', 'nasal', 'vertigo', 'sinuses'],
               pediatrics: ['child', 'baby', 'toddler', 'kid', 'infant', 'pediatric', 'pediatrics', 'pediatrician', 'vaccine', 'adolescent', 'growth', 'newborn'],
               psychiatry: ['anxiety', 'depression', 'mood', 'mental', 'panic', 'stress', 'sleep', 'bipolar', 'psych', 'sad', 'fear', 'schizophrenia', 'adhd', 'psychological', 'trauma', 'hallucination'],
-              'family medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness'],
-              'general medicine': ['cough', 'cold', 'fever', 'flu', 'sore throat', 'stomach', 'belly', 'fatigue', 'general', 'routine', 'sickness', 'nausea', 'vomit', 'diarrhea', 'illness', 'ache', 'clinic', 'checkup', 'wellness']
+              pulmonology: ['cough', 'breath', 'breathing', 'shortness', 'wheeze', 'wheezing', 'asthma', 'lung', 'lungs', 'respiratory', 'copd', 'bronchitis', 'pneumonia', 'chest congestion', 'phlegm', 'sleep apnea', 'sputum'],
+              rheumatology: ['joint', 'arthritis', 'inflammation', 'autoimmune', 'lupus', 'fibromyalgia', 'gout', 'swelling', 'stiff', 'stiffness', 'rheumatoid', 'connective tissue', 'flare', 'achy', 'tendonitis'],
+              urology: ['urine', 'urinary', 'bladder', 'kidney', 'prostate', 'pee', 'urinate', 'incontinence', 'uti', 'kidney stone', 'erectile', 'testicular', 'frequent urination', 'blood in urine', 'renal'],
             }
 
             const scores = new Map<string, number>()
