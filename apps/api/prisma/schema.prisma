@@ -67,6 +67,7 @@ model PatientProfile {
   conversations     Conversation[]
   symptomLogs       SymptomLog[]
   metrics           PatientMetric[]
+  medicationReminders MedicationReminder[]
 }
 
 model DoctorProfile {
@@ -127,15 +128,36 @@ model ConsultationRecord {
 }
 
 model Prescription {
-  id                   String             @id @default(cuid())
+  id                   String               @id @default(cuid())
   consultationRecordId String
-  consultationRecord   ConsultationRecord @relation(fields: [consultationRecordId], references: [id], onDelete: Cascade)
+  consultationRecord   ConsultationRecord   @relation(fields: [consultationRecordId], references: [id], onDelete: Cascade)
   medicationName       String
   dosage               String
   frequency            String
   duration             String
   notes                String?
-  createdAt            DateTime           @default(now())
+  createdAt            DateTime             @default(now())
+  reminders            MedicationReminder[]
+}
+
+// ─── Medication Reminders ───────────────────────────────────────────────────────
+// Derived from a prescription's free-text frequency/duration by a periodic
+// scheduler. One row per dose-window that has been surfaced to the patient.
+
+model MedicationReminder {
+  id             String         @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription   @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  // Start of the dose-window this reminder represents; dedup is keyed on it.
+  scheduledFor   DateTime
+  taken          Boolean        @default(false)
+  takenAt        DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@unique([prescriptionId, scheduledFor])
+  @@index([patientId, scheduledFor])
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
