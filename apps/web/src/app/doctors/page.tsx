@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react'
+import { Show, UserButton } from '@clerk/nextjs'
+import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse, Info } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
 import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '@lunasol/types'
 
@@ -185,6 +186,78 @@ const formatAiResponse = (content: string, isUser: boolean = false) => {
   return <div style={{ display: 'flex', flexDirection: 'column' }}>{elements}</div>
 }
 
+// Compact, accessible disclaimer indicator. Reveals the full safety/legal text
+// on hover and on keyboard focus. The text stays in the DOM (role="tooltip")
+// and is associated with the trigger via aria-describedby for screen readers.
+function DisclaimerTooltip() {
+  const [open, setOpen] = useState(false)
+  const tooltipId = 'ai-matcher-disclaimer'
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex' }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        aria-describedby={tooltipId}
+        aria-expanded={open}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '5px 10px',
+          borderRadius: '8px',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          background: 'rgba(254, 243, 199, 0.55)',
+          color: '#92400e',
+          fontSize: '12.5px',
+          fontWeight: 600,
+          cursor: 'help',
+        }}
+      >
+        <ShieldCheck size={14} color="#d97706" style={{ flexShrink: 0 }} />
+        <span>Informational only</span>
+        <Info size={13} color="#d97706" style={{ flexShrink: 0 }} />
+      </button>
+
+      <div
+        id={tooltipId}
+        role="tooltip"
+        style={{
+          position: 'absolute',
+          top: 'calc(100% + 8px)',
+          right: 0,
+          zIndex: 20,
+          width: '320px',
+          maxWidth: '80vw',
+          background: 'rgba(254, 243, 199, 0.97)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '12px',
+          padding: '14px 16px',
+          color: '#92400e',
+          fontSize: '13px',
+          lineHeight: '1.5',
+          boxShadow: '0 12px 28px -10px rgba(146, 64, 14, 0.25)',
+          opacity: open ? 1 : 0,
+          visibility: open ? 'visible' : 'hidden',
+          transform: open ? 'translateY(0)' : 'translateY(-4px)',
+          transition: 'opacity 0.15s ease, transform 0.15s ease',
+          pointerEvents: open ? 'auto' : 'none',
+          textAlign: 'left',
+          fontWeight: 400,
+        }}
+      >
+        <strong style={{ fontWeight: 700, display: 'block', marginBottom: '4px', fontSize: '13.5px' }}>AI Triage Advisor (Informational Only)</strong>
+        This tool utilizes clinical-grade language models to map described symptoms to specialties within our network. It <strong>does not diagnose illnesses, prescribe medications, or replace professional medical advice</strong>. If you are experiencing a severe, sudden, or life-threatening situation, please call emergency responders (e.g. 911) immediately.
+      </div>
+    </div>
+  )
+}
+
 export default function DoctorsPage() {
   const router = useRouter()
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -308,9 +381,15 @@ export default function DoctorsPage() {
           <HeartPulse size={24} color="#6366f1" />
           <span>LunaSol</span>
         </a>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign In</a>
-          <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign Up</a>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Show when="signed-out">
+            <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign In</a>
+            <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign Up</a>
+          </Show>
+          <Show when="signed-in">
+            <a href="/dashboard" style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 600, color: '#0f172a', textDecoration: 'none' }}>Dashboard</a>
+            <UserButton />
+          </Show>
         </div>
       </nav>
 
@@ -332,9 +411,10 @@ export default function DoctorsPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <Sparkles size={20} color="#6366f1" style={{ filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.4))' }} />
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>AI-Powered Doctor Matcher</h2>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Find the right specialist</h2>
+                <DisclaimerTooltip />
               </div>
-              <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Describe your symptoms, and MedGemma AI will recommend the most appropriate specialists.</p>
+              <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Describe your symptoms and we&apos;ll suggest the right specialties.</p>
             </div>
             
             {(messages.length > 0 || reasoning || recommendedDoctors.length > 0 || aiLoading) && (
@@ -363,29 +443,26 @@ export default function DoctorsPage() {
             )}
           </div>
 
-          {/* 1. Amber Disclaimer Banner (Required Guardrail) */}
-          <div style={{
-            background: 'rgba(254, 243, 199, 0.55)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            display: 'flex',
-            gap: '14px',
-            color: '#92400e',
-            fontSize: '13.5px',
-            lineHeight: '1.5',
-            marginBottom: '24px'
-          }}>
-            <ShieldCheck size={20} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong style={{ fontWeight: 700, display: 'block', marginBottom: '2px', fontSize: '14px' }}>AI Triage Advisor (Informational Only)</strong>
-              This tool utilizes clinical-grade language models to map described symptoms to specialties within our network. It <strong>does not diagnose illnesses, prescribe medications, or replace professional medical advice</strong>. If you are experiencing a severe, sudden, or life-threatening situation, please call emergency responders (e.g. 911) immediately.
+          {/* 2. Symptom Input Area & Conversational Flow.
+                When the AI service is unavailable, hide both the form and the
+                chat and point users to the directory below as a fallback. */}
+          {aiError ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              color: '#475569',
+              fontSize: '14px',
+              lineHeight: '1.5'
+            }}>
+              <Info size={18} color="#94a3b8" style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>Smart matching is temporarily unavailable — browse the directory below.</span>
             </div>
-          </div>
-
-          {/* 2. Symptom Input Area & Conversational Flow */}
-          {messages.length === 0 ? (
+          ) : messages.length === 0 ? (
             <form onSubmit={handleAiSubmit}>
               <div style={{ position: 'relative', marginBottom: '16px' }}>
                 <textarea
@@ -489,7 +566,7 @@ export default function DoctorsPage() {
                   ) : (
                     <>
                       <Send size={15} />
-                      <span>Find My Doctor Match</span>
+                      <span>Find a specialist</span>
                     </>
                   )}
                 </button>
@@ -516,7 +593,7 @@ export default function DoctorsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: aiLoading ? '#22c55e' : '#64748b', animation: aiLoading ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none' }} />
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    {aiLoading ? 'MedGemma 1.5 Chat Active' : 'MedGemma Triage Session'}
+                    {aiLoading ? 'Matching in progress' : 'Symptom assistant'}
                   </span>
                 </div>
 
@@ -571,7 +648,7 @@ export default function DoctorsPage() {
                           color: '#64748b',
                           alignSelf: isUser ? 'flex-end' : 'flex-start'
                         }}>
-                          {isUser ? 'You (Patient)' : 'MedGemma AI'}
+                          {isUser ? 'You' : 'Symptom assistant'}
                         </span>
 
                         {bubbleIsEmergency && (
@@ -628,7 +705,7 @@ export default function DoctorsPage() {
                   type="text"
                   value={followUpQuery}
                   onChange={(e) => setFollowUpQuery(e.target.value)}
-                  placeholder="Reply to MedGemma or provide more details..."
+                  placeholder="Reply or provide more details..."
                   disabled={aiLoading}
                   style={{
                     flex: 1,
@@ -684,7 +761,7 @@ export default function DoctorsPage() {
             <div style={{ marginTop: '36px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={16} color="#8b5cf6" />
-                <span>AI Recommended Specialist Matching ({recommendedDoctors.length})</span>
+                <span>Suggested specialists ({recommendedDoctors.length})</span>
                 {aiError && <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 500 }}>({aiError})</span>}
               </h3>
               
@@ -769,7 +846,7 @@ export default function DoctorsPage() {
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, marginBottom: '4px', fontSize: '12px' }}>
                           <Sparkles size={12} color="#7c3aed" />
-                          <span>AI MATCH RATIONALE</span>
+                          <span>WHY THIS MATCH</span>
                         </div>
                         {doc.reason}
                       </div>
