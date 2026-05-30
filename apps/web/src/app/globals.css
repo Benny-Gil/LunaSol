@@ -19,3 +19,42 @@
 :focus:not(:focus-visible) {
   outline: none;
 }
+
+/*
+ * Landing-page interaction styles.
+ *
+ * The landing page (app/page.tsx) styles everything with inline `style={{}}`,
+ * which can't express `:hover`/transitions. These few classes add interaction
+ * feedback only; all layout/color still lives inline on the elements.
+ */
+html {
+  scroll-behavior: smooth;
+}
+
+.ls-btn {
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.ls-btn-primary:hover {
+  background: #1f2937 !important;
+  transform: translateY(-1px);
+}
+.ls-btn-ghost:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+}
+
+.ls-card {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.ls-card:hover {
+  border-color: #d1d5db !important;
+  box-shadow: 0 4px 16px rgba(17, 24, 39, 0.06);
+  transform: translateY(-2px);
+}
+
+.ls-navlink {
+  transition: color 0.15s ease;
+}
+.ls-navlink:hover {
+  color: #111827 !important;
+}

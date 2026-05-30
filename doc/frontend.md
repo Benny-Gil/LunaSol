@@ -96,6 +96,36 @@ Role-based redirects happen at sign-in: the middleware reads `publicMetadata.rol
 
 ---
 
+## SEO
+
+SEO is handled entirely through the App Router's built-in Metadata API and file conventions — no extra libraries.
+
+### Metadata (`app/layout.tsx`)
+
+The root layout exports a `metadata` object that applies site-wide and is inherited (and overridable) by every route:
+
+- **`metadataBase`** — resolves relative OpenGraph/canonical URLs to absolute ones. Reads `NEXT_PUBLIC_APP_URL` (the public site origin), falling back to `http://localhost:3000` in dev.
+- **`title`** — uses the `{ default, template }` form so child pages get `"<Page> · LunaSol"` automatically while the home page stays `"LunaSol Telehealth"`.
+- **`description` / `keywords`** — concise, telehealth-focused copy for search snippets.
+- **`alternates.canonical`** — canonical URL to avoid duplicate-content penalties.
+- **`openGraph` + `twitter`** — rich link previews for social/chat shares (`summary_large_image` card).
+- **`robots`** — explicitly allows indexing/following (incl. `googleBot`).
+
+Per-page overrides: any route can export its own `metadata` (static) or `generateMetadata` (dynamic, e.g. a doctor's name/specialty on `/doctors/[id]`) to merge over these defaults.
+
+### `robots.txt` and `sitemap.xml`
+
+Generated at the edge via App Router file conventions (no static files to maintain):
+
+- **`app/robots.ts`** → served at `/robots.txt`. Allows crawling public marketing pages, disallows `/dashboard` (authenticated, not useful to crawlers), and points to the sitemap.
+- **`app/sitemap.ts`** → served at `/sitemap.xml`. Lists the public, crawlable pages (`/`, `/doctors`) with `lastModified` / `changeFrequency` / `priority`.
+
+Both read the same `NEXT_PUBLIC_APP_URL` so the absolute URLs stay correct across environments.
+
+> Note: the authenticated dashboard intentionally has minimal SEO — it sits behind Clerk auth and carries no public value. SEO effort is concentrated on the public marketing surface.
+
+---
+
 ## Why No Separate State Management Library
 
 The app's server-side data is fetched fresh per page load via RSC — no need to cache it in global state. The only global client state is:
