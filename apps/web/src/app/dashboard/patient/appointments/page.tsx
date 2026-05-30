@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar, Clock, Zap } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+  isInstant: boolean
   doctor: { id: string; name: string; specialization: string; profilePictureUrl: string | null }
-  slot: { startTime: string; endTime: string }
+  slot: { startTime: string; endTime: string } | null
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -115,7 +116,8 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
   onClick: () => void
 }) {
   const statusStyle = STATUS_COLORS[appt.status] || { bg: '#f3f4f6', text: '#374151' }
-  const date = new Date(appt.slot.startTime)
+  const isInstant = appt.isInstant || !appt.slot
+  const date = appt.slot ? new Date(appt.slot.startTime) : null
   const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED'
 
   return (
@@ -131,12 +133,20 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
       </div>
 
       <div style={{ display: 'flex', gap: '20px', marginBottom: canCancel ? '16px' : '0' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
-          <Calendar size={14} /> {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
-          <Clock size={14} /> {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-        </span>
+        {isInstant || !date ? (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#059669', fontWeight: 600 }}>
+            <Zap size={14} /> Instant · Now
+          </span>
+        ) : (
+          <>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
+              <Calendar size={14} /> {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
+              <Clock size={14} /> {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+            </span>
+          </>
+        )}
       </div>
 
       {canCancel && (

@@ -16,7 +16,8 @@ interface Prescription {
 interface Appointment {
   id: string
   status: string
-  slot: { startTime: string }
+  isInstant?: boolean
+  slot: { startTime: string } | null
   record: { notes: string | null; prescriptions: Prescription[] } | null
 }
 
@@ -64,11 +65,13 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '20px' }}>
               {history.map((a) => {
-                const date = new Date(a.slot.startTime)
+                const date = a.slot ? new Date(a.slot.startTime) : null
                 return (
                   <div key={a.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
                     <p style={{ fontSize: '13px', fontWeight: 700, color: '#374151', margin: '0 0 8px' }}>
-                      {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      {date
+                        ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                        : 'Instant consultation'}
                     </p>
                     {a.record?.notes ? (
                       <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: '0 0 8px', whiteSpace: 'pre-line' }}>{a.record.notes}</p>
