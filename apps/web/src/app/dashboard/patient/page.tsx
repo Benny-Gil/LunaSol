@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import { Video, Bot, FolderOpen, Calendar, Activity } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
+import HealthDashboard from './HealthDashboard'
 
 export default async function PatientDashboard() {
   const user = await currentUser()
@@ -42,6 +43,9 @@ export default async function PatientDashboard() {
             All your health resources, virtual consultations, and medical records are synchronized and ready.
           </p>
         </div>
+
+        {/* Health Dashboard: weight/height trend + next-appointment summary */}
+        <HealthDashboard />
 
         {/* Quick Stats / Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>

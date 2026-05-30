@@ -43,6 +43,11 @@ export class PatientsController implements OnModuleInit {
     return this.patientsService.getProfile(req.user.id)
   }
 
+  @Get('me/metrics')
+  async getMetrics(@Req() req: any) {
+    return this.patientsService.getMetrics(req.user.id)
+  }
+
   @Patch('me')
   async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
     return this.patientsService.updateProfile(req.user.id, dto)

@@ -66,6 +66,7 @@ model PatientProfile {
   appointments      Appointment[]
   conversations     Conversation[]
   symptomLogs       SymptomLog[]
+  metrics           PatientMetric[]
 }
 
 model DoctorProfile {
@@ -198,4 +199,19 @@ model SymptomLog {
   updatedAt   DateTime        @updatedAt
 
   @@index([patientId, loggedAt])
+}
+
+// ─── Patient Metrics ────────────────────────────────────────────────────────────
+// Time-series snapshot of a patient's weight/height, captured whenever the patient
+// updates those values on their profile. Powers the patient health dashboard trends.
+
+model PatientMetric {
+  id         String         @id @default(cuid())
+  patientId  String
+  patient    PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  weight     Float
+  height     Float
+  recordedAt DateTime       @default(now())
+
+  @@index([patientId, recordedAt])
 }
