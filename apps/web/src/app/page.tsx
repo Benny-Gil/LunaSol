@@ -21,8 +21,10 @@ export default function Home() {
           <a href="#trust" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>About</a>
           <a href="#contact" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '15px' }}>Contact</a>
           <Show when="signed-out">
+            {/* Sign in is a text link (matching the nav links above); Get started
+                is the single primary button — so the header has no duplicate buttons. */}
             <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
-              <button className="ls-btn ls-btn-ghost" style={{ background: 'transparent', border: '1px solid #d1d5db', color: '#111827', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+              <button className="ls-navlink" style={{ background: 'transparent', border: 'none', color: '#6b7280', cursor: 'pointer', fontSize: '15px', padding: 0, fontFamily: 'inherit' }}>
                 Sign in
               </button>
             </SignInButton>
@@ -140,11 +142,14 @@ export default function Home() {
             <p style={{ color: '#6b7280', fontSize: '13px', margin: '8px 0 0', maxWidth: '280px', lineHeight: 1.6 }}>
               Telehealth and digital care, closer to you.
             </p>
+            <a href="mailto:support@lunasol.health" className="ls-navlink" style={{ display: 'inline-block', color: '#6b7280', textDecoration: 'none', fontSize: '13px', marginTop: '12px' }}>
+              support@lunasol.health
+            </a>
           </div>
           <nav aria-label="Footer" style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
-            <a href="#" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Privacy</a>
-            <a href="#" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Terms</a>
-            <a href="#contact" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Contact</a>
+            <a href="/privacy" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Privacy</a>
+            <a href="/terms" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Terms</a>
+            <a href="mailto:support@lunasol.health" className="ls-navlink" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}>Contact</a>
           </nav>
         </div>
         <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '13px', marginTop: '32px' }}>
