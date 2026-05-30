@@ -294,6 +294,41 @@ export class AppointmentsService {
     return updated
   }
 
+  /**
+   * Suggest a follow-up appointment to the patient (issue #82). A doctor calls
+   * this from the consultation notes screen; it creates an actionable notification
+   * prompting the patient to rebook with the same doctor — no schema change, the
+   * patient follows the existing booking flow (`/doctors/:id`). The appointment
+   * must be confirmed or completed, mirroring when a consultation record exists.
+   */
+  async suggestFollowUp(clerkId: string, id: string) {
+    const { doctor } = await this.getDoctorProfile(clerkId)
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+      include: { doctor: true, patient: { include: { user: true } } },
+    })
+
+    if (!appointment) throw new NotFoundException('Appointment not found')
+    if (appointment.doctorId !== doctor.id) throw new ForbiddenException('Not your appointment')
+    if (
+      appointment.status !== AppointmentStatus.CONFIRMED &&
+      appointment.status !== AppointmentStatus.COMPLETED
+    ) {
+      throw new ConflictException(
+        'A follow-up can only be suggested for a confirmed or completed appointment',
+      )
+    }
+
+    await this.createNotification(
+      appointment.patient.user.id,
+      'APPOINTMENT_FOLLOWUP_SUGGESTED',
+      `Dr. ${appointment.doctor.name} recommends a follow-up appointment. Book a new slot to continue your care.`,
+    )
+
+    return { ok: true }
+  }
+
   async complete(clerkId: string, id: string) {
     const { doctor } = await this.getDoctorProfile(clerkId)
 

@@ -143,6 +143,7 @@ async function main() {
   // ── 1. Clean slate (reverse FK order) ────────────────────────────────────
   console.log('  ✕ Clearing existing data …');
   await prisma.medicationReminder.deleteMany();
+  await prisma.patientMetric.deleteMany();
   await prisma.symptomLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.prescription.deleteMany();
@@ -420,6 +421,33 @@ async function main() {
     symptomLogCount += entries.length;
   }
 
+  // ── 6c. Create patient metrics (weight/height time-series) ───────────────
+  console.log('  + Creating patient metrics …');
+
+  // A short trend per patient ending at their current profile weight/height,
+  // so the patient health dashboard has a sparkline to render.
+  let patientMetricCount = 0;
+  for (let i = 0; i < patientProfiles.length; i++) {
+    const profile = patientProfiles[i]!;
+    // Drift backwards from the current weight over the last few months.
+    const points = [
+      { recordedAt: pastDate(120, 9), weight: profile.weight + 4 },
+      { recordedAt: pastDate(90, 9), weight: profile.weight + 2.5 },
+      { recordedAt: pastDate(60, 9), weight: profile.weight + 1 },
+      { recordedAt: pastDate(30, 9), weight: profile.weight + 0.5 },
+      { recordedAt: pastDate(1, 9), weight: profile.weight },
+    ];
+    await prisma.patientMetric.createMany({
+      data: points.map((p) => ({
+        patientId: profile.id,
+        weight: Math.round(p.weight * 10) / 10,
+        height: profile.height,
+        recordedAt: p.recordedAt,
+      })),
+    });
+    patientMetricCount += points.length;
+  }
+
   // ── 7. Create notifications ──────────────────────────────────────────────
   console.log('  + Creating notifications …');
 
@@ -537,6 +565,7 @@ async function main() {
     prescriptions: await prisma.prescription.count(),
     notifications: await prisma.notification.count(),
     symptomLogs: await prisma.symptomLog.count(),
+    patientMetrics: await prisma.patientMetric.count(),
     medicationReminders: await prisma.medicationReminder.count(),
   };
 

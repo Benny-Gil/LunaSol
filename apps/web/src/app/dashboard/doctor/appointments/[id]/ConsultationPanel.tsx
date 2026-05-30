@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import { Plus, FileText } from 'lucide-react'
+import { Plus, FileText, CalendarPlus } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Prescription {
@@ -38,6 +38,8 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
   const [rx, setRx] = useState({ ...EMPTY_RX })
   const [addingRx, setAddingRx] = useState(false)
   const [showRxForm, setShowRxForm] = useState(false)
+  const [suggestingFollowUp, setSuggestingFollowUp] = useState(false)
+  const [followUpSent, setFollowUpSent] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -72,6 +74,22 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
 
   function applyTemplate(body: string) {
     setNotes((prev) => (prev.trim() ? prev.replace(/\s*$/, '') + '\n\n' + body : body))
+  }
+
+  async function suggestFollowUp() {
+    setSuggestingFollowUp(true)
+    try {
+      const token = await getToken()
+      await apiFetch(`/appointments/${appointmentId}/suggest-follow-up`, {
+        token: token || undefined,
+        method: 'POST',
+      })
+      setFollowUpSent(true)
+    } catch (err: any) {
+      alert(err.message || 'Failed to suggest a follow-up.')
+    } finally {
+      setSuggestingFollowUp(false)
+    }
   }
 
   async function addPrescription() {
@@ -200,6 +218,28 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
 
         {!record?.prescriptions.length && !showRxForm && (
           <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>No prescriptions added.</p>
+        )}
+      </div>
+
+      <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px solid #f3f4f6' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
+          Follow-up
+        </h3>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 14px' }}>
+          Prompt the patient to book a follow-up appointment with you.
+        </p>
+        {followUpSent ? (
+          <p style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#059669', margin: 0 }}>
+            <CalendarPlus size={16} /> Follow-up suggestion sent to the patient.
+          </p>
+        ) : (
+          <button
+            onClick={suggestFollowUp}
+            disabled={suggestingFollowUp}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#10b981', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', cursor: suggestingFollowUp ? 'default' : 'pointer', opacity: suggestingFollowUp ? 0.7 : 1 }}
+          >
+            <CalendarPlus size={16} /> {suggestingFollowUp ? 'Sending...' : 'Suggest follow-up'}
+          </button>
         )}
       </div>
     </div>
