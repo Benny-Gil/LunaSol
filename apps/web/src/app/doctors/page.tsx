@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { Show, UserButton } from '@clerk/nextjs'
 import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
 import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '@lunasol/types'
@@ -308,9 +309,15 @@ export default function DoctorsPage() {
           <HeartPulse size={24} color="#6366f1" />
           <span>LunaSol</span>
         </a>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign In</a>
-          <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign Up</a>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Show when="signed-out">
+            <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign In</a>
+            <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign Up</a>
+          </Show>
+          <Show when="signed-in">
+            <a href="/dashboard" style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 600, color: '#0f172a', textDecoration: 'none' }}>Dashboard</a>
+            <UserButton />
+          </Show>
         </div>
       </nav>
 

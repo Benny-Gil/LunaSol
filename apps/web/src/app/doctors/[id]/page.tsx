@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, Show, UserButton } from '@clerk/nextjs'
 import { User, Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
@@ -110,6 +110,16 @@ export default function DoctorDetailPage() {
           <ArrowLeft size={16} /> Back
         </button>
         <span style={{ fontSize: '18px', fontWeight: 700, color: '#111827', letterSpacing: '-0.5px' }}>LunaSol</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Show when="signed-out">
+            <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none' }}>Sign In</a>
+            <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none' }}>Sign Up</a>
+          </Show>
+          <Show when="signed-in">
+            <a href="/dashboard" style={{ fontSize: '14px', fontWeight: 600, color: '#111827', textDecoration: 'none' }}>Dashboard</a>
+            <UserButton />
+          </Show>
+        </div>
       </nav>
 
       <main style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: '32px', alignItems: 'start' }}>
