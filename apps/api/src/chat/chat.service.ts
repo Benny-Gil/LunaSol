@@ -148,6 +148,7 @@ export class ChatService {
       if (PATIENT_ONLY.includes(dto.attachmentType) && mySide !== 'patient') {
         throw new ForbiddenException(`Only the patient can attach a ${dto.attachmentType.toLowerCase()}`)
       }
+      this.validateAttachment(dto.attachmentType, dto.attachment)
     }
 
     const message = await this.prisma.message.create({
@@ -266,6 +267,33 @@ export class ChatService {
       readAt: message.readAt?.toISOString() ?? null,
       createdAt: message.createdAt.toISOString(),
     }
+  }
+
+  /**
+   * Validate a client-supplied attachment snapshot per type. Snapshots are
+   * stored as-is and rendered on the recipient's side, so a missing/wrong-typed
+   * field (e.g. a non-array `recommendations`) would otherwise crash the thread.
+   */
+  private validateAttachment(type: MessageAttachmentType, attachment: unknown) {
+    const a = (attachment ?? {}) as Record<string, unknown>
+    const str = (v: unknown) => typeof v === 'string' && v.trim().length > 0
+    const ok = (() => {
+      switch (type) {
+        case 'PRESCRIPTION':
+          return str(a.medicationName) && str(a.dosage) && str(a.frequency) && str(a.duration)
+        case 'NOTE':
+          return str(a.notes)
+        case 'APPOINTMENT':
+          return str(a.appointmentId) && typeof a.status === 'string' && typeof a.isInstant === 'boolean'
+        case 'AI_SUGGESTION':
+          return typeof a.symptoms === 'string' && Array.isArray(a.recommendations)
+        case 'SYMPTOM':
+          return str(a.description) && ['MILD', 'MODERATE', 'SEVERE'].includes(a.severity as string)
+        default:
+          return false
+      }
+    })()
+    if (!ok) throw new BadRequestException(`Invalid ${type.toLowerCase()} attachment`)
   }
 
   private async createNotification(recipientId: string, type: string, message: string) {

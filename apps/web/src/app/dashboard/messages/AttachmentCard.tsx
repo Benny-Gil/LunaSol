@@ -68,15 +68,16 @@ export default function AttachmentCard({
     }
     case 'AI_SUGGESTION': {
       const s = data as AiSuggestionAttachment
+      const recommendations = Array.isArray(s.recommendations) ? s.recommendations : []
       return (
         <Shell icon={<Sparkles size={15} />} label="AI triage suggestion" accent="#2563eb">
           <p style={metaStyle}>Symptoms described</p>
           <p style={bodyStyle}>{s.symptoms}</p>
-          {s.recommendations.length > 0 && (
+          {recommendations.length > 0 && (
             <>
               <p style={{ ...metaStyle, marginTop: '8px' }}>Suggested specialists</p>
               <ul style={{ margin: '4px 0 0', paddingLeft: '16px' }}>
-                {s.recommendations.map((r, i) => (
+                {recommendations.map((r, i) => (
                   <li key={i} style={bodyStyle}>
                     <strong>{r.name}</strong> — {r.specialization}
                   </li>
