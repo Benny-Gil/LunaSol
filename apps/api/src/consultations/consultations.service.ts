@@ -88,4 +88,38 @@ export class ConsultationsService {
       include: { prescriptions: { orderBy: { createdAt: 'asc' } } },
     })
   }
+
+  /**
+   * Cross-module read for the reminders scheduler: return prescriptions created
+   * on/after `createdAfter` whose appointment is CONFIRMED or COMPLETED, with
+   * the owning patient id attached. The consultations module owns prescription
+   * data, so other modules must call this rather than querying the table.
+   */
+  async listPrescriptionsForReminders(createdAfter: Date) {
+    const prescriptions = await this.prisma.prescription.findMany({
+      where: {
+        createdAt: { gte: createdAfter },
+        consultationRecord: {
+          appointment: {
+            status: { in: [AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED] },
+          },
+        },
+      },
+      include: {
+        consultationRecord: {
+          select: { appointment: { select: { patientId: true } } },
+        },
+      },
+    })
+
+    return prescriptions.map((rx) => ({
+      id: rx.id,
+      medicationName: rx.medicationName,
+      dosage: rx.dosage,
+      frequency: rx.frequency,
+      duration: rx.duration,
+      createdAt: rx.createdAt,
+      patientId: rx.consultationRecord.appointment.patientId,
+    }))
+  }
 }
