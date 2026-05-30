@@ -142,6 +142,7 @@ async function main() {
 
   // ── 1. Clean slate (reverse FK order) ────────────────────────────────────
   console.log('  ✕ Clearing existing data …');
+  await prisma.medicationReminder.deleteMany();
   await prisma.symptomLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.prescription.deleteMany();
@@ -350,6 +351,46 @@ async function main() {
     });
   }
 
+  // ── 6a. Create medication reminders (from active prescriptions) ──────────
+  console.log('  + Creating medication reminders …');
+
+  let reminderCount = 0;
+  for (let i = 0; i < 3; i++) {
+    // Grab one prescription for this patient to anchor sample reminders on.
+    const rx = await prisma.prescription.findFirst({
+      where: { consultationRecord: { appointment: { patientId: patientProfiles[i]!.id } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!rx) continue;
+
+    // One reminder already taken (earlier today) + one still pending (now).
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const takenWindow = new Date(today.getTime() + 8 * 60 * 60 * 1000); // 08:00 UTC
+    const pendingWindow = new Date(today.getTime() + 20 * 60 * 60 * 1000); // 20:00 UTC
+
+    await prisma.medicationReminder.createMany({
+      data: [
+        {
+          prescriptionId: rx.id,
+          patientId: patientProfiles[i]!.id,
+          scheduledFor: takenWindow,
+          taken: true,
+          takenAt: new Date(takenWindow.getTime() + 30 * 60 * 1000),
+        },
+        {
+          prescriptionId: rx.id,
+          patientId: patientProfiles[i]!.id,
+          scheduledFor: pendingWindow,
+          taken: false,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    reminderCount += 2;
+  }
+  console.log(`    → ${reminderCount} medication reminders queued`);
+
   // ── 6b. Create symptom logs (patient-owned history) ──────────────────────
   console.log('  + Creating symptom logs …');
 
@@ -496,6 +537,7 @@ async function main() {
     prescriptions: await prisma.prescription.count(),
     notifications: await prisma.notification.count(),
     symptomLogs: await prisma.symptomLog.count(),
+    medicationReminders: await prisma.medicationReminder.count(),
   };
 
   console.log('\n✅ Seed complete!');
