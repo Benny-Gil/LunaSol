@@ -73,7 +73,15 @@ export default function DoctorAppointmentDetailPage() {
 
   if (inSession && appt) {
     // Re-fetch on leave so a status change (e.g. completed) is reflected.
-    return <ConsultationSession appointmentId={appt.id} onLeave={() => { setInSession(false); load() }} />
+    // The notes/prescription panel rides along in a side drawer so the doctor
+    // can write during the call (issue #87).
+    return (
+      <ConsultationSession
+        appointmentId={appt.id}
+        onLeave={() => { setInSession(false); load() }}
+        sidePanel={<ConsultationPanel appointmentId={appt.id} embedded />}
+      />
+    )
   }
 
   const isInstant = !!appt?.isInstant || (!!appt && !appt.slot)
