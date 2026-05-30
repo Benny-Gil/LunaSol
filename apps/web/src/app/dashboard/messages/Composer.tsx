@@ -120,7 +120,9 @@ export default function Composer({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            // Ignore Enter while an IME composition is active, otherwise it
+            // sends a half-composed message (CJK and other IME input).
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
               handleSend()
             }
