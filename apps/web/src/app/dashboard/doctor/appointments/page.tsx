@@ -61,7 +61,7 @@ export default function DoctorAppointmentsPage() {
 
       <main style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 24px' }}>
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading appointments...</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading appointments...</p>
         ) : appointments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <Calendar size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
@@ -102,7 +102,19 @@ function AppointmentCard({ appt, onClick }: { appt: Appointment; onClick: () => 
   const timeRemaining = isUpcoming && appt.slot ? formatTimeRemaining(appt.slot.startTime, now) : null
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px', cursor: 'pointer' }} onClick={onClick}>
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`View appointment with ${appt.patient.name || 'patient'}`}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px', cursor: 'pointer' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ display: 'flex', padding: '8px', background: '#ecfdf5', borderRadius: '8px', color: '#059669' }}>

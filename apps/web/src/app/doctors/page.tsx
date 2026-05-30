@@ -885,7 +885,16 @@ export default function DoctorsPage() {
                 {recommendedDoctors.map((doc) => (
                   <div
                     key={doc.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View profile for ${doc.name}, ${doc.specialization}`}
                     onClick={() => router.push(`/doctors/${doc.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        router.push(`/doctors/${doc.id}`)
+                      }
+                    }}
                     style={{
                       flex: '0 0 350px',
                       scrollSnapAlign: 'start',
@@ -1022,7 +1031,16 @@ export default function DoctorsPage() {
             {doctors.map((doctor) => (
               <div
                 key={doctor.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`View profile for ${doctor.name}, ${doctor.specialization}`}
                 onClick={() => router.push(`/doctors/${doctor.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    router.push(`/doctors/${doctor.id}`)
+                  }
+                }}
                 style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '24px', cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow = '0 10px 20px -8px rgba(0,0,0,0.06)'
