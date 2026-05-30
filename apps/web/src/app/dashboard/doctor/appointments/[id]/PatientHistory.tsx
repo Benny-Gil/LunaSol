@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { History, ChevronDown, ChevronUp } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
-import { SymptomLog, SymptomSeverity } from '@lunasol/types'
+import { SymptomLog } from '@lunasol/types'
+import { SeverityBadge } from '@/lib/symptoms'
 
 interface Prescription {
   id: string
@@ -22,12 +23,6 @@ interface Appointment {
   record: { notes: string | null; prescriptions: Prescription[] } | null
 }
 
-const SEVERITY_STYLES: Record<SymptomSeverity, { bg: string; color: string; label: string }> = {
-  MILD: { bg: '#f0fdf4', color: '#15803d', label: 'Mild' },
-  MODERATE: { bg: '#fffbeb', color: '#b45309', label: 'Moderate' },
-  SEVERE: { bg: '#fef2f2', color: '#b91c1c', label: 'Severe' },
-}
-
 export default function PatientHistory({ patientId, currentAppointmentId }: { patientId: string; currentAppointmentId: string }) {
   const { getToken } = useAuth()
   const [open, setOpen] = useState(false)
@@ -38,22 +33,18 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
   const load = useCallback(async () => {
     const token = await getToken()
 
-    // Fetch consultations and symptom logs independently so one failing
-    // (e.g. permissions) doesn't blank the other.
-    try {
-      const data: Appointment[] = await apiFetch(`/appointments/mine?patientId=${patientId}`, { token: token || undefined })
-      setHistory(
-        data.filter((a) => a.id !== currentAppointmentId && a.status === 'COMPLETED'),
-      )
-    } catch {
-      // fall through
-    }
+    // Fetch consultations and symptom logs concurrently and independently, so
+    // one failing (e.g. permissions) doesn't blank or delay the other.
+    const [appts, logs] = await Promise.allSettled([
+      apiFetch(`/appointments/mine?patientId=${patientId}`, { token: token || undefined }) as Promise<Appointment[]>,
+      apiFetch(`/symptom-logs/patient/${patientId}`, { token: token || undefined }) as Promise<SymptomLog[]>,
+    ])
 
-    try {
-      const logs: SymptomLog[] = await apiFetch(`/symptom-logs/patient/${patientId}`, { token: token || undefined })
-      setSymptoms(logs)
-    } catch {
-      // fall through
+    if (appts.status === 'fulfilled') {
+      setHistory(appts.value.filter((a) => a.id !== currentAppointmentId && a.status === 'COMPLETED'))
+    }
+    if (logs.status === 'fulfilled') {
+      setSymptoms(logs.value)
     }
 
     setLoaded(true)
@@ -86,20 +77,17 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
                 <div>
                   <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>Reported symptoms</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {symptoms.map((s) => {
-                      const style = SEVERITY_STYLES[s.severity]
-                      return (
-                        <div key={s.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px 16px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: style.color, background: style.bg, padding: '2px 10px', borderRadius: '12px' }}>{style.label}</span>
-                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>
-                              {new Date(s.loggedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{s.description}</p>
+                    {symptoms.map((s) => (
+                      <div key={s.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                          <SeverityBadge severity={s.severity} />
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>
+                            {new Date(s.loggedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          </span>
                         </div>
-                      )
-                    })}
+                        <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{s.description}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
