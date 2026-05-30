@@ -134,6 +134,11 @@ export default function SignUpPage() {
               </select>
             </div>
 
+            {/* Clerk mounts its Smart CAPTCHA widget here. Required for custom
+                sign-up flows when Bot sign-up protection is enabled (prod);
+                without it prepareEmailAddressVerification fails with a 400. */}
+            <div id="clerk-captcha" />
+
             <button
               type="submit"
               disabled={loading}
