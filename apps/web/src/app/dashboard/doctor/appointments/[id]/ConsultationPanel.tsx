@@ -101,15 +101,19 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
   return (
     <div
       style={
+        // Embedded (in the live-session drawer): no card chrome — the drawer
+        // supplies the frame and the "Consultation notes" header.
         embedded
-          ? { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px' }
+          ? { background: 'transparent' }
           : { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px', marginTop: '20px' }
       }
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-        <FileText size={20} color="#059669" />
-        <h2 style={{ fontSize: embedded ? '16px' : '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
-      </div>
+      {!embedded && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <FileText size={20} color="#059669" />
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
         <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Templates:</span>
@@ -169,7 +173,7 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
 
         {showRxForm && (
           <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '10px' }}>
               <Field label="Medication" value={rx.medicationName} onChange={(v) => setRx({ ...rx, medicationName: v })} />
               <Field label="Dosage" value={rx.dosage} onChange={(v) => setRx({ ...rx, dosage: v })} />
               <Field label="Frequency" value={rx.frequency} onChange={(v) => setRx({ ...rx, frequency: v })} />
