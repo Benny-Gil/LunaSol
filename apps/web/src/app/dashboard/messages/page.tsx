@@ -118,7 +118,7 @@ function Thread({
       </header>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f9fafb' }}>
-        {messages.length === 0 && <p style={{ textAlign: 'center', color: '#9ca3af', fontSize: '13px', marginTop: '24px' }}>No messages yet. Say hello, or share a record.</p>}
+        {messages.length === 0 && <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '13px', marginTop: '24px' }}>No messages yet. Say hello, or share a record.</p>}
         {messages.map((m) => (
           <Bubble key={m.id} message={m} mine={m.senderRole !== counterpart.role} viewerRole={viewerRole} />
         ))}
@@ -144,7 +144,7 @@ function Bubble({ message, mine, viewerRole }: { message: ChatMessage; mine: boo
           </div>
         )}
       </div>
-      <span style={{ fontSize: '11px', color: '#9ca3af', margin: '3px 4px 0' }}>{time}</span>
+      <span style={{ fontSize: '11px', color: '#6b7280', margin: '3px 4px 0' }}>{time}</span>
     </div>
   )
 }
@@ -162,7 +162,7 @@ function ConversationRow({ convo, active, onClick }: { convo: ConversationSummar
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
           <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{convo.counterpart.name}</span>
-          <span style={{ fontSize: '11px', color: '#9ca3af', flexShrink: 0 }}>{new Date(convo.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          <span style={{ fontSize: '11px', color: '#6b7280', flexShrink: 0 }}>{new Date(convo.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '13px', color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview}</span>
@@ -188,7 +188,7 @@ function Avatar({ name, url }: { name: string; url: string | null }) {
 
 function EmptyState() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', padding: '40px 20px', textAlign: 'center', gap: '10px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280', padding: '40px 20px', textAlign: 'center', gap: '10px' }}>
       <MessageSquare size={28} />
       <p style={{ fontSize: '14px', margin: 0 }}>No conversations yet.</p>
     </div>
@@ -197,7 +197,7 @@ function EmptyState() {
 
 function Placeholder({ loading }: { loading: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', fontSize: '14px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#6b7280', fontSize: '14px' }}>
       {loading ? 'Loading conversation…' : 'Select a conversation'}
     </div>
   )

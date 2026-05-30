@@ -63,7 +63,7 @@ export default function RecordsPage() {
         </div>
 
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading records...</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading records...</p>
         ) : appointments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <FolderOpen size={48} color="#d1d5db" style={{ margin: '0 auto 16px' }} />
@@ -97,7 +97,7 @@ export default function RecordsPage() {
                   {isOpen && (
                     <div style={{ padding: '0 24px 24px', borderTop: '1px solid #f3f4f6' }}>
                       {!appt.record ? (
-                        <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No consultation notes added yet.</p>
+                        <p style={{ color: '#6b7280', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No consultation notes added yet.</p>
                       ) : (
                         <>
                           {appt.record.notes && (
@@ -119,7 +119,7 @@ export default function RecordsPage() {
                                     <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>
                                       {rx.dosage} · {rx.frequency} · {rx.duration}
                                     </p>
-                                    {rx.notes && <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0', fontStyle: 'italic' }}>{rx.notes}</p>}
+                                    {rx.notes && <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0', fontStyle: 'italic' }}>{rx.notes}</p>}
                                   </div>
                                 ))}
                               </div>

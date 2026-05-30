@@ -405,4 +405,4 @@ const fieldLabel: React.CSSProperties = { display: 'block', fontSize: '12px', fo
 const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', color: '#111827', boxSizing: 'border-box' }
 const listStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '6px' }
 const listItemStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', width: '100%' }
-const emptyStyle: React.CSSProperties = { fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '20px 0', margin: 0 }
+const emptyStyle: React.CSSProperties = { fontSize: '13px', color: '#6b7280', textAlign: 'center', padding: '20px 0', margin: 0 }

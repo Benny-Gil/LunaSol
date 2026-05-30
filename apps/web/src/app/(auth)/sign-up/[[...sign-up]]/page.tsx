@@ -69,20 +69,20 @@ export default function SignUpPage() {
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f9fafb', fontFamily: "'Segoe UI', system-ui, sans-serif", padding: '24px' }}>
+    <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f9fafb', fontFamily: "'Segoe UI', system-ui, sans-serif", padding: '24px' }}>
       <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '40px', width: '100%', maxWidth: '440px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)' }}>
-        
+
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>
             {pendingVerification ? 'Verify your email' : 'Create your account'}
-          </h2>
+          </h1>
           <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
             {pendingVerification ? `We sent a code to ${emailAddress}` : 'Join LunaSol Telehealth today'}
           </p>
         </div>
 
         {error && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '12px 16px', color: '#b91c1c', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
+          <div role="alert" style={{ background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '12px 16px', color: '#b91c1c', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
             {error}
           </div>
         )}
@@ -184,6 +184,6 @@ export default function SignUpPage() {
         </div>
 
       </div>
-    </div>
+    </main>
   )
 }

@@ -35,6 +35,7 @@ export default function Home() {
         </div>
       </nav>
 
+      <main>
       {/* Hero */}
       <section style={{ textAlign: 'center', padding: '96px 24px 80px', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'inline-block', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '999px', padding: '5px 14px', fontSize: '13px', color: '#6b7280', marginBottom: '28px', fontWeight: 500 }}>
@@ -106,9 +107,10 @@ export default function Home() {
           </a>
         </Show>
       </section>
+      </main>
 
       {/* Footer */}
-      <footer style={{ textAlign: 'center', padding: '28px', color: '#9ca3af', fontSize: '13px', borderTop: '1px solid #e5e7eb' }}>
+      <footer style={{ textAlign: 'center', padding: '28px', color: '#6b7280', fontSize: '13px', borderTop: '1px solid #e5e7eb' }}>
         © {new Date().getFullYear()} LunaSol. All rights reserved.
       </footer>
 

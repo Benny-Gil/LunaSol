@@ -140,11 +140,11 @@ export default function DoctorSchedulePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', margin: 0, letterSpacing: '-0.5px' }}>Availability</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button onClick={() => setWeekStart(addDays(weekStart, -7))} style={navBtn}><ChevronLeft size={18} /></button>
+            <button onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Previous week" style={navBtn}><ChevronLeft size={18} /></button>
             <span style={{ fontSize: '14px', fontWeight: 600, color: '#374151', minWidth: '180px', textAlign: 'center' }}>
               {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
-            <button onClick={() => setWeekStart(addDays(weekStart, 7))} style={navBtn}><ChevronRight size={18} /></button>
+            <button onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week" style={navBtn}><ChevronRight size={18} /></button>
           </div>
         </div>
         <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 24px' }}>
@@ -167,7 +167,7 @@ export default function DoctorSchedulePage() {
                   return (
                     <th key={label} style={headCell}>
                       <div>{label}</div>
-                      <div style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>{d.getDate()}</div>
+                      <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>{d.getDate()}</div>
                     </th>
                   )
                 })}
@@ -277,5 +277,5 @@ function Legend({ color, border, label }: { color: string; border: string; label
 
 const navBtn: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', color: '#374151' }
 const headCell: React.CSSProperties = { padding: '8px 4px', fontSize: '13px', fontWeight: 700, color: '#374151', textAlign: 'center', borderBottom: '1px solid #e5e7eb' }
-const timeCell: React.CSSProperties = { padding: '4px 8px', fontSize: '11px', color: '#9ca3af', textAlign: 'right', whiteSpace: 'nowrap' }
+const timeCell: React.CSSProperties = { padding: '4px 8px', fontSize: '11px', color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' }
 const miniBtn: React.CSSProperties = { padding: '2px 6px', background: '#ffffff', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '10px', fontWeight: 600, color: '#374151', cursor: 'pointer' }

@@ -124,7 +124,7 @@ export default function PatientOverview({
               {history}
             </p>
           ) : (
-            <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0, fontStyle: 'italic' }}>
               No medical history on file.
             </p>
           )}
@@ -135,9 +135,9 @@ export default function PatientOverview({
             <Stethoscope size={15} color="#059669" /> Last visit
           </p>
           {!loaded ? (
-            <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>Loading...</p>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Loading...</p>
           ) : !lastVisit ? (
-            <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0, fontStyle: 'italic' }}>
+            <p style={{ fontSize: '14px', color: '#6b7280', margin: 0, fontStyle: 'italic' }}>
               No prior completed consultations.
             </p>
           ) : (
@@ -164,7 +164,7 @@ export default function PatientOverview({
                   {lastVisit.record.notes}
                 </p>
               ) : (
-                <p style={{ fontSize: '13px', color: '#9ca3af', margin: '0 0 8px', fontStyle: 'italic' }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 8px', fontStyle: 'italic' }}>
                   No notes recorded.
                 </p>
               )}

@@ -209,7 +209,7 @@ export default function DoctorProfileForm({ mode }: { mode: 'onboarding' | 'edit
             >
               {pictureUrl ? 'Change photo' : 'Upload photo'}
             </button>
-            <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px', marginBottom: 0 }}>JPG, PNG up to 5 MB</p>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', marginBottom: 0 }}>JPG, PNG up to 5 MB</p>
           </div>
           <input
             ref={fileInputRef}

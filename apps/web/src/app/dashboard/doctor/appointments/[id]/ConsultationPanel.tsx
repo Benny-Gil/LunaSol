@@ -183,7 +183,7 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
               <div key={p.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px 16px' }}>
                 <p style={{ fontSize: '14px', fontWeight: 700, color: '#111827', margin: '0 0 6px' }}>{p.medicationName}</p>
                 <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{p.dosage} · {p.frequency} · {p.duration}</p>
-                {p.notes && <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0', fontStyle: 'italic' }}>{p.notes}</p>}
+                {p.notes && <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0', fontStyle: 'italic' }}>{p.notes}</p>}
               </div>
             ))}
           </div>
@@ -217,7 +217,7 @@ export default function ConsultationPanel({ appointmentId, embedded = false }: {
         )}
 
         {!record?.prescriptions.length && !showRxForm && (
-          <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>No prescriptions added.</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>No prescriptions added.</p>
         )}
       </div>
 

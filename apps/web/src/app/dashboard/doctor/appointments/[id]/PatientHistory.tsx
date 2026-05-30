@@ -68,9 +68,9 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
       {open && (
         <div style={{ padding: '0 28px 24px', borderTop: '1px solid #f3f4f6' }}>
           {!loaded ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>Loading...</p>
+            <p style={{ color: '#6b7280', fontSize: '14px', paddingTop: '20px', margin: 0 }}>Loading...</p>
           ) : history.length === 0 && symptoms.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No prior consultations or symptom logs for this patient.</p>
+            <p style={{ color: '#6b7280', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No prior consultations or symptom logs for this patient.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingTop: '20px' }}>
               {symptoms.length > 0 && (
@@ -108,7 +108,7 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
                     {a.record?.notes ? (
                       <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: '0 0 8px', whiteSpace: 'pre-line' }}>{a.record.notes}</p>
                     ) : (
-                      <p style={{ fontSize: '13px', color: '#9ca3af', margin: '0 0 8px', fontStyle: 'italic' }}>No notes recorded.</p>
+                      <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 8px', fontStyle: 'italic' }}>No notes recorded.</p>
                     )}
                     {a.record && a.record.prescriptions.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
