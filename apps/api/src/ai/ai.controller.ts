@@ -88,11 +88,15 @@ export class AiController {
 
             let currentEvent = ''
             for (const line of lines) {
-              const trimmed = line.trim()
-              if (trimmed.startsWith('event:')) {
-                currentEvent = trimmed.substring(6).trim()
-              } else if (trimmed.startsWith('data:')) {
-                const data = trimmed.substring(5).trim()
+              if (line.startsWith('event:')) {
+                currentEvent = line.substring(6).trim()
+              } else if (line.startsWith('data:')) {
+                // Strip the "data:" prefix and at most one leading space (the
+                // SSE field separator). Do NOT trim the remainder: LLM tokens
+                // carry their own leading spaces, so trimming collides words
+                // together (e.g. "The user" -> "Theuser").
+                let data = line.substring(5)
+                if (data.startsWith(' ')) data = data.slice(1)
                 if (currentEvent === 'reasoning') {
                   subscriber.next({ type: 'reasoning', data })
                 } else if (currentEvent === 'recommendations') {
@@ -104,9 +108,9 @@ export class AiController {
                     console.error('Error parsing or enriching doctors payload:', e)
                   }
                 } else if (currentEvent === 'error') {
-                  subscriber.next({ type: 'error', data })
+                  subscriber.next({ type: 'error', data: data.trim() })
                 }
-              } else if (trimmed === '') {
+              } else if (line === '') {
                 currentEvent = ''
               }
             }
