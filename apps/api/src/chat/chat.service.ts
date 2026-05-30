@@ -219,11 +219,13 @@ export class ChatService {
       data: { readAt: new Date() },
     })
 
+    // Fetch the most recent 300 (desc + take), then present oldest→newest.
     const messages = await this.prisma.message.findMany({
       where: { conversationId: conversation.id },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 300,
     })
+    messages.reverse()
 
     return {
       id: conversation.id,
@@ -280,7 +282,9 @@ export class ChatService {
     const ok = (() => {
       switch (type) {
         case 'PRESCRIPTION':
-          return str(a.medicationName) && str(a.dosage) && str(a.frequency) && str(a.duration)
+          // Only medicationName is guaranteed non-empty at creation; the rest
+          // can be blank and the card filters them, so don't over-reject.
+          return str(a.medicationName)
         case 'NOTE':
           return str(a.notes)
         case 'APPOINTMENT':
