@@ -22,7 +22,15 @@ interface ConsultationRecord {
 
 const EMPTY_RX = { medicationName: '', dosage: '', frequency: '', duration: '', notes: '' }
 
-export default function ConsultationPanel({ appointmentId }: { appointmentId: string }) {
+/** Quick-start templates for common consultation note structures (issue #79). */
+const NOTE_TEMPLATES: { label: string; body: string }[] = [
+  { label: 'General', body: 'Chief complaint:\n\nObservations:\n\nAssessment:\n\nPlan:\n' },
+  { label: 'Follow-up', body: 'Progress since last visit:\n\nCurrent status:\n\nPlan:\n' },
+  { label: 'Medication review', body: 'Current medications:\n\nAdherence:\n\nChanges:\n' },
+  { label: 'Referral', body: 'Reason for referral:\n\nReferred to:\n\nNotes:\n' },
+]
+
+export default function ConsultationPanel({ appointmentId, embedded = false }: { appointmentId: string; embedded?: boolean }) {
   const { getToken } = useAuth()
   const [record, setRecord] = useState<ConsultationRecord | null>(null)
   const [notes, setNotes] = useState('')
@@ -62,6 +70,10 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
     }
   }
 
+  function applyTemplate(body: string) {
+    setNotes((prev) => (prev.trim() ? prev.replace(/\s*$/, '') + '\n\n' + body : body))
+  }
+
   async function addPrescription() {
     if (!rx.medicationName.trim()) {
       alert('Medication name is required.')
@@ -87,10 +99,34 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
   }
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px', marginTop: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-        <FileText size={20} color="#059669" />
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
+    <div
+      style={
+        // Embedded (in the live-session drawer): no card chrome — the drawer
+        // supplies the frame and the "Consultation notes" header.
+        embedded
+          ? { background: 'transparent' }
+          : { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px', marginTop: '20px' }
+      }
+    >
+      {!embedded && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <FileText size={20} color="#059669" />
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Templates:</span>
+        {NOTE_TEMPLATES.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            onClick={() => applyTemplate(t.body)}
+            style={{ padding: '4px 10px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <textarea
@@ -137,7 +173,7 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
 
         {showRxForm && (
           <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '10px' }}>
               <Field label="Medication" value={rx.medicationName} onChange={(v) => setRx({ ...rx, medicationName: v })} />
               <Field label="Dosage" value={rx.dosage} onChange={(v) => setRx({ ...rx, dosage: v })} />
               <Field label="Frequency" value={rx.frequency} onChange={(v) => setRx({ ...rx, frequency: v })} />
