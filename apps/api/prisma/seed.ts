@@ -3,6 +3,7 @@ import {
   PrismaClient,
   Role,
   AppointmentStatus,
+  SymptomSeverity,
 } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
@@ -141,6 +142,9 @@ async function main() {
 
   // ── 1. Clean slate (reverse FK order) ────────────────────────────────────
   console.log('  ✕ Clearing existing data …');
+  await prisma.medicationReminder.deleteMany();
+  await prisma.patientMetric.deleteMany();
+  await prisma.symptomLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.prescription.deleteMany();
   await prisma.consultationRecord.deleteMany();
@@ -348,6 +352,102 @@ async function main() {
     });
   }
 
+  // ── 6a. Create medication reminders (from active prescriptions) ──────────
+  console.log('  + Creating medication reminders …');
+
+  let reminderCount = 0;
+  for (let i = 0; i < 3; i++) {
+    // Grab one prescription for this patient to anchor sample reminders on.
+    const rx = await prisma.prescription.findFirst({
+      where: { consultationRecord: { appointment: { patientId: patientProfiles[i]!.id } } },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!rx) continue;
+
+    // One reminder already taken (earlier today) + one still pending (now).
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const takenWindow = new Date(today.getTime() + 8 * 60 * 60 * 1000); // 08:00 UTC
+    const pendingWindow = new Date(today.getTime() + 20 * 60 * 60 * 1000); // 20:00 UTC
+
+    await prisma.medicationReminder.createMany({
+      data: [
+        {
+          prescriptionId: rx.id,
+          patientId: patientProfiles[i]!.id,
+          scheduledFor: takenWindow,
+          taken: true,
+          takenAt: new Date(takenWindow.getTime() + 30 * 60 * 1000),
+        },
+        {
+          prescriptionId: rx.id,
+          patientId: patientProfiles[i]!.id,
+          scheduledFor: pendingWindow,
+          taken: false,
+        },
+      ],
+      skipDuplicates: true,
+    });
+    reminderCount += 2;
+  }
+  console.log(`    → ${reminderCount} medication reminders queued`);
+
+  // ── 6b. Create symptom logs (patient-owned history) ──────────────────────
+  console.log('  + Creating symptom logs …');
+
+  // A small diary per patient so the doctor's Patient History panel has data.
+  const symptomLogsByPatient = [
+    [
+      { description: 'Dry, tickly cough that worsens at night. No fever.', severity: SymptomSeverity.MILD, loggedAt: pastDate(10, 21) },
+      { description: 'Cough now bringing up clear phlegm, mild wheezing after walking.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(6, 8) },
+      { description: 'Chest feels tight in the mornings, short of breath on the stairs.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(2, 7) },
+    ],
+    [
+      { description: 'Increased thirst and frequent urination over the past week.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(8, 9) },
+      { description: 'Persistent fatigue in the afternoons, occasional blurred vision.', severity: SymptomSeverity.SEVERE, loggedAt: pastDate(3, 16) },
+    ],
+    [
+      { description: 'Red, itchy patch on left forearm, slightly warm to touch.', severity: SymptomSeverity.MILD, loggedAt: pastDate(5, 19) },
+      { description: 'Rash spreading and more inflamed despite moisturiser.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(1, 20) },
+    ],
+  ];
+
+  let symptomLogCount = 0;
+  for (let i = 0; i < symptomLogsByPatient.length; i++) {
+    const entries = symptomLogsByPatient[i]!;
+    await prisma.symptomLog.createMany({
+      data: entries.map((e) => ({ ...e, patientId: patientProfiles[i]!.id })),
+    });
+    symptomLogCount += entries.length;
+  }
+
+  // ── 6c. Create patient metrics (weight/height time-series) ───────────────
+  console.log('  + Creating patient metrics …');
+
+  // A short trend per patient ending at their current profile weight/height,
+  // so the patient health dashboard has a sparkline to render.
+  let patientMetricCount = 0;
+  for (let i = 0; i < patientProfiles.length; i++) {
+    const profile = patientProfiles[i]!;
+    // Drift backwards from the current weight over the last few months.
+    const points = [
+      { recordedAt: pastDate(120, 9), weight: profile.weight + 4 },
+      { recordedAt: pastDate(90, 9), weight: profile.weight + 2.5 },
+      { recordedAt: pastDate(60, 9), weight: profile.weight + 1 },
+      { recordedAt: pastDate(30, 9), weight: profile.weight + 0.5 },
+      { recordedAt: pastDate(1, 9), weight: profile.weight },
+    ];
+    await prisma.patientMetric.createMany({
+      data: points.map((p) => ({
+        patientId: profile.id,
+        weight: Math.round(p.weight * 10) / 10,
+        height: profile.height,
+        recordedAt: p.recordedAt,
+      })),
+    });
+    patientMetricCount += points.length;
+  }
+
   // ── 7. Create notifications ──────────────────────────────────────────────
   console.log('  + Creating notifications …');
 
@@ -464,6 +564,9 @@ async function main() {
     consultationRecords: await prisma.consultationRecord.count(),
     prescriptions: await prisma.prescription.count(),
     notifications: await prisma.notification.count(),
+    symptomLogs: await prisma.symptomLog.count(),
+    patientMetrics: await prisma.patientMetric.count(),
+    medicationReminders: await prisma.medicationReminder.count(),
   };
 
   console.log('\n✅ Seed complete!');

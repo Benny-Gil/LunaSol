@@ -20,6 +20,20 @@ enum AppointmentStatus {
   COMPLETED
 }
 
+enum MessageAttachmentType {
+  PRESCRIPTION
+  NOTE
+  APPOINTMENT
+  AI_SUGGESTION
+  SYMPTOM
+}
+
+enum SymptomSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -32,14 +46,15 @@ model User {
   patient       PatientProfile?
   doctor        DoctorProfile?
   notifications Notification[]
+  sentMessages  Message[]       @relation("MessageSender")
 }
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 
 model PatientProfile {
-  id                String        @id @default(cuid())
-  userId            String        @unique
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name              String
   birthday          DateTime
   weight            Float
@@ -49,6 +64,10 @@ model PatientProfile {
   address           String?
   medicalHistory    String?
   appointments      Appointment[]
+  conversations     Conversation[]
+  symptomLogs       SymptomLog[]
+  metrics           PatientMetric[]
+  medicationReminders MedicationReminder[]
 }
 
 model DoctorProfile {
@@ -63,6 +82,7 @@ model DoctorProfile {
   acceptingInstant  Boolean            @default(false)
   slots             AvailabilitySlot[]
   appointments      Appointment[]
+  conversations     Conversation[]
 }
 
 // ─── Availability ─────────────────────────────────────────────────────────────
@@ -80,19 +100,19 @@ model AvailabilitySlot {
 // ─── Appointments ─────────────────────────────────────────────────────────────
 
 model Appointment {
-  id        String             @id @default(cuid())
-  patientId String
-  patient   PatientProfile     @relation(fields: [patientId], references: [id])
-  doctorId  String
-  doctor    DoctorProfile      @relation(fields: [doctorId], references: [id])
-  slotId    String?            @unique
-  slot      AvailabilitySlot?  @relation(fields: [slotId], references: [id])
-  isInstant Boolean            @default(false)
-  status      AppointmentStatus  @default(PENDING)
+  id          String              @id @default(cuid())
+  patientId   String
+  patient     PatientProfile      @relation(fields: [patientId], references: [id])
+  doctorId    String
+  doctor      DoctorProfile       @relation(fields: [doctorId], references: [id])
+  slotId      String?             @unique
+  slot        AvailabilitySlot?   @relation(fields: [slotId], references: [id])
+  isInstant   Boolean             @default(false)
+  status      AppointmentStatus   @default(PENDING)
   livekitRoom String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  record    ConsultationRecord?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  record      ConsultationRecord?
 }
 
 // ─── Consultation ──────────────────────────────────────────────────────────────
@@ -108,15 +128,36 @@ model ConsultationRecord {
 }
 
 model Prescription {
-  id                   String             @id @default(cuid())
+  id                   String               @id @default(cuid())
   consultationRecordId String
-  consultationRecord   ConsultationRecord @relation(fields: [consultationRecordId], references: [id], onDelete: Cascade)
+  consultationRecord   ConsultationRecord   @relation(fields: [consultationRecordId], references: [id], onDelete: Cascade)
   medicationName       String
   dosage               String
   frequency            String
   duration             String
   notes                String?
-  createdAt            DateTime           @default(now())
+  createdAt            DateTime             @default(now())
+  reminders            MedicationReminder[]
+}
+
+// ─── Medication Reminders ───────────────────────────────────────────────────────
+// Derived from a prescription's free-text frequency/duration by a periodic
+// scheduler. One row per dose-window that has been surfaced to the patient.
+
+model MedicationReminder {
+  id             String         @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription   @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  patientId      String
+  patient        PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  // Start of the dose-window this reminder represents; dedup is keyed on it.
+  scheduledFor   DateTime
+  taken          Boolean        @default(false)
+  takenAt        DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@unique([prescriptionId, scheduledFor])
+  @@index([patientId, scheduledFor])
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
@@ -129,4 +170,70 @@ model Notification {
   message     String
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+// One continuous conversation per patient↔doctor pair (spans all appointments).
+
+model Conversation {
+  id        String         @id @default(cuid())
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  Message[]
+
+  @@unique([patientId, doctorId])
+  @@index([doctorId])
+}
+
+model Message {
+  id             String                 @id @default(cuid())
+  conversationId String
+  conversation   Conversation           @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User                   @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  body           String?
+  // Optional rich attachment: a denormalized snapshot captured at send-time,
+  // plus an optional source id for deep-linking. See MessageAttachmentType.
+  attachmentType MessageAttachmentType?
+  attachment     Json?
+  refId          String?
+  readAt         DateTime?
+  createdAt      DateTime               @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ─── Symptom Log ────────────────────────────────────────────────────────────────
+// Patient-owned diary of symptoms over time; shareable with a treating doctor.
+
+model SymptomLog {
+  id          String          @id @default(cuid())
+  patientId   String
+  patient     PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  description String
+  severity    SymptomSeverity
+  loggedAt    DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([patientId, loggedAt])
+}
+
+// ─── Patient Metrics ────────────────────────────────────────────────────────────
+// Time-series snapshot of a patient's weight/height, captured whenever the patient
+// updates those values on their profile. Powers the patient health dashboard trends.
+
+model PatientMetric {
+  id         String         @id @default(cuid())
+  patientId  String
+  patient    PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  weight     Float
+  height     Float
+  recordedAt DateTime       @default(now())
+
+  @@index([patientId, recordedAt])
 }

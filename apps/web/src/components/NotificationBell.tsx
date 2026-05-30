@@ -28,7 +28,11 @@ export default function NotificationBell() {
   async function handleClick(id: string, type: string) {
     await markRead(id)
     setOpen(false)
-    if (type.startsWith('APPOINTMENT')) {
+    // A follow-up suggestion (issue #82) deep-links the patient into the
+    // booking flow so they can rebook right away.
+    if (type === 'APPOINTMENT_FOLLOWUP_SUGGESTED') {
+      router.push('/doctors')
+    } else if (type.startsWith('APPOINTMENT')) {
       router.push(
         role === 'doctor'
           ? '/dashboard/doctor'
@@ -136,7 +140,7 @@ export default function NotificationBell() {
             {notifications.length === 0 ? (
               <p
                 style={{
-                  color: '#9ca3af',
+                  color: '#6b7280',
                   fontSize: '13px',
                   textAlign: 'center',
                   padding: '32px 16px',
@@ -177,7 +181,7 @@ export default function NotificationBell() {
                   <span style={{ fontSize: '13px', color: '#111827', lineHeight: 1.4 }}>
                     {n.message}
                   </span>
-                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>{timeAgo(n.createdAt)}</span>
+                  <span style={{ fontSize: '11px', color: '#6b7280' }}>{timeAgo(n.createdAt)}</span>
                 </button>
               ))
             )}

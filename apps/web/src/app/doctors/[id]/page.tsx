@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth, Show, UserButton } from '@clerk/nextjs'
-import { User, Calendar, Clock, ArrowLeft, Zap } from 'lucide-react'
+import { User, Calendar, Clock, ArrowLeft, Zap, MessageSquare } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Doctor {
@@ -226,7 +226,7 @@ export default function DoctorDetailPage() {
           {slots.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <Clock size={32} color="#d1d5db" style={{ margin: '0 auto 12px' }} />
-              <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>No available slots in the next 14 days.</p>
+              <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>No available slots in the next 14 days.</p>
             </div>
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -293,8 +293,15 @@ export default function DoctorDetailPage() {
             {booking ? 'Booking...' : !isSignedIn ? 'Sign in to book' : 'Book appointment'}
           </button>
 
+          <button
+            onClick={() => router.push(isSignedIn ? `/dashboard/messages?doctorId=${id}` : '/sign-in')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', padding: '12px', background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginTop: '10px' }}
+          >
+            <MessageSquare size={16} /> Message doctor
+          </button>
+
           {!isSignedIn && (
-            <p style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
+            <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
               You need to be signed in to book.
             </p>
           )}

@@ -3,18 +3,25 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { ArrowLeft, Calendar, Clock, User, Video, Zap } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, User, Video, Zap, MessageSquare } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ConsultationSession from '@/components/ConsultationSession'
 import ConsultationPanel from './ConsultationPanel'
 import PatientHistory from './PatientHistory'
+import PatientOverview from './PatientOverview'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
   livekitRoom: string | null
   isInstant: boolean
-  patient: { id: string; name: string; profilePictureUrl: string | null }
+  patient: {
+    id: string
+    name: string
+    profilePictureUrl: string | null
+    birthday: string | null
+    medicalHistory: string | null
+  }
   slot: { startTime: string; endTime: string } | null
 }
 
@@ -73,7 +80,15 @@ export default function DoctorAppointmentDetailPage() {
 
   if (inSession && appt) {
     // Re-fetch on leave so a status change (e.g. completed) is reflected.
-    return <ConsultationSession appointmentId={appt.id} onLeave={() => { setInSession(false); load() }} />
+    // The notes/prescription panel rides along in a side drawer so the doctor
+    // can write during the call (issue #87).
+    return (
+      <ConsultationSession
+        appointmentId={appt.id}
+        onLeave={() => { setInSession(false); load() }}
+        sidePanel={<ConsultationPanel appointmentId={appt.id} embedded />}
+      />
+    )
   }
 
   const isInstant = !!appt?.isInstant || (!!appt && !appt.slot)
@@ -102,9 +117,9 @@ export default function DoctorAppointmentDetailPage() {
         </button>
 
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading...</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading...</p>
         ) : !appt ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
         ) : (
           <>
             <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px' }}>
@@ -142,6 +157,8 @@ export default function DoctorAppointmentDetailPage() {
                 )}
               </div>
 
+              <PatientOverview patient={appt.patient} currentAppointmentId={appt.id} />
+
               <div style={{ display: 'flex', gap: '10px', marginTop: '24px', flexWrap: 'wrap' }}>
                 {appt.status === 'PENDING' && (
                   <button
@@ -170,9 +187,15 @@ export default function DoctorAppointmentDetailPage() {
                     </button>
                   </>
                 )}
+                <button
+                  onClick={() => router.push(`/dashboard/messages?patientId=${appt.patient.id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+                >
+                  <MessageSquare size={16} /> Message patient
+                </button>
               </div>
               {appt.status === 'CONFIRMED' && !canJoin && (
-                <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '12px' }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
                   The session opens from {new Date(start - JOIN_LEAD_MS).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} on the day of the appointment.
                 </p>
               )}

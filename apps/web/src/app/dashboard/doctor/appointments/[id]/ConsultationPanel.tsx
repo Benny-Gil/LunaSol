@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import { Plus, FileText } from 'lucide-react'
+import { Plus, FileText, CalendarPlus } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Prescription {
@@ -22,7 +22,15 @@ interface ConsultationRecord {
 
 const EMPTY_RX = { medicationName: '', dosage: '', frequency: '', duration: '', notes: '' }
 
-export default function ConsultationPanel({ appointmentId }: { appointmentId: string }) {
+/** Quick-start templates for common consultation note structures (issue #79). */
+const NOTE_TEMPLATES: { label: string; body: string }[] = [
+  { label: 'General', body: 'Chief complaint:\n\nObservations:\n\nAssessment:\n\nPlan:\n' },
+  { label: 'Follow-up', body: 'Progress since last visit:\n\nCurrent status:\n\nPlan:\n' },
+  { label: 'Medication review', body: 'Current medications:\n\nAdherence:\n\nChanges:\n' },
+  { label: 'Referral', body: 'Reason for referral:\n\nReferred to:\n\nNotes:\n' },
+]
+
+export default function ConsultationPanel({ appointmentId, embedded = false }: { appointmentId: string; embedded?: boolean }) {
   const { getToken } = useAuth()
   const [record, setRecord] = useState<ConsultationRecord | null>(null)
   const [notes, setNotes] = useState('')
@@ -30,6 +38,8 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
   const [rx, setRx] = useState({ ...EMPTY_RX })
   const [addingRx, setAddingRx] = useState(false)
   const [showRxForm, setShowRxForm] = useState(false)
+  const [suggestingFollowUp, setSuggestingFollowUp] = useState(false)
+  const [followUpSent, setFollowUpSent] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -62,6 +72,26 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
     }
   }
 
+  function applyTemplate(body: string) {
+    setNotes((prev) => (prev.trim() ? prev.replace(/\s*$/, '') + '\n\n' + body : body))
+  }
+
+  async function suggestFollowUp() {
+    setSuggestingFollowUp(true)
+    try {
+      const token = await getToken()
+      await apiFetch(`/appointments/${appointmentId}/suggest-follow-up`, {
+        token: token || undefined,
+        method: 'POST',
+      })
+      setFollowUpSent(true)
+    } catch (err: any) {
+      alert(err.message || 'Failed to suggest a follow-up.')
+    } finally {
+      setSuggestingFollowUp(false)
+    }
+  }
+
   async function addPrescription() {
     if (!rx.medicationName.trim()) {
       alert('Medication name is required.')
@@ -87,10 +117,34 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
   }
 
   return (
-    <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px', marginTop: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-        <FileText size={20} color="#059669" />
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
+    <div
+      style={
+        // Embedded (in the live-session drawer): no card chrome — the drawer
+        // supplies the frame and the "Consultation notes" header.
+        embedded
+          ? { background: 'transparent' }
+          : { background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px', marginTop: '20px' }
+      }
+    >
+      {!embedded && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          <FileText size={20} color="#059669" />
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>Consultation notes</h2>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>Templates:</span>
+        {NOTE_TEMPLATES.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            onClick={() => applyTemplate(t.body)}
+            style={{ padding: '4px 10px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <textarea
@@ -129,7 +183,7 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
               <div key={p.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '14px 16px' }}>
                 <p style={{ fontSize: '14px', fontWeight: 700, color: '#111827', margin: '0 0 6px' }}>{p.medicationName}</p>
                 <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>{p.dosage} · {p.frequency} · {p.duration}</p>
-                {p.notes && <p style={{ fontSize: '13px', color: '#9ca3af', margin: '4px 0 0', fontStyle: 'italic' }}>{p.notes}</p>}
+                {p.notes && <p style={{ fontSize: '13px', color: '#6b7280', margin: '4px 0 0', fontStyle: 'italic' }}>{p.notes}</p>}
               </div>
             ))}
           </div>
@@ -137,7 +191,7 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
 
         {showRxForm && (
           <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '10px' }}>
               <Field label="Medication" value={rx.medicationName} onChange={(v) => setRx({ ...rx, medicationName: v })} />
               <Field label="Dosage" value={rx.dosage} onChange={(v) => setRx({ ...rx, dosage: v })} />
               <Field label="Frequency" value={rx.frequency} onChange={(v) => setRx({ ...rx, frequency: v })} />
@@ -163,7 +217,29 @@ export default function ConsultationPanel({ appointmentId }: { appointmentId: st
         )}
 
         {!record?.prescriptions.length && !showRxForm && (
-          <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>No prescriptions added.</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>No prescriptions added.</p>
+        )}
+      </div>
+
+      <div style={{ marginTop: '28px', paddingTop: '24px', borderTop: '1px solid #f3f4f6' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 6px' }}>
+          Follow-up
+        </h3>
+        <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 14px' }}>
+          Prompt the patient to book a follow-up appointment with you.
+        </p>
+        {followUpSent ? (
+          <p style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#059669', margin: 0 }}>
+            <CalendarPlus size={16} /> Follow-up suggestion sent to the patient.
+          </p>
+        ) : (
+          <button
+            onClick={suggestFollowUp}
+            disabled={suggestingFollowUp}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: '#10b981', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', cursor: suggestingFollowUp ? 'default' : 'pointer', opacity: suggestingFollowUp ? 0.7 : 1 }}
+          >
+            <CalendarPlus size={16} /> {suggestingFollowUp ? 'Sending...' : 'Suggest follow-up'}
+          </button>
         )}
       </div>
     </div>
