@@ -62,4 +62,10 @@ export class AppointmentsController {
   complete(@Req() req: any, @Param('id') id: string) {
     return this.appointmentsService.complete(req.user.id, id)
   }
+
+  @Roles('doctor')
+  @Post(':id/suggest-follow-up')
+  suggestFollowUp(@Req() req: any, @Param('id') id: string) {
+    return this.appointmentsService.suggestFollowUp(req.user.id, id)
+  }
 }
