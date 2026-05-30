@@ -64,6 +64,7 @@ export class PatientsService {
 
   async updateProfile(clerkId: string, dto: UpdateProfileDto) {
     const user = await this.ensurePatientRecord(clerkId)
+    const current = user.patient!
 
     const data: Record<string, any> = {}
     if (dto.name !== undefined) data.name = dto.name
@@ -75,12 +76,43 @@ export class PatientsService {
     if (dto.medicalHistory !== undefined) data.medicalHistory = dto.medicalHistory
 
     const updated = await this.prisma.patientProfile.update({
-      where: { id: user.patient!.id },
+      where: { id: current.id },
       data,
     })
 
+    // Snapshot a metric row whenever weight or height actually changes, so the
+    // patient health dashboard can plot the trend over time.
+    const weightChanged = dto.weight !== undefined && dto.weight !== current.weight
+    const heightChanged = dto.height !== undefined && dto.height !== current.height
+    if ((weightChanged || heightChanged) && updated.weight > 0 && updated.height > 0) {
+      await this.prisma.patientMetric.create({
+        data: {
+          patientId: updated.id,
+          weight: updated.weight,
+          height: updated.height,
+        },
+      })
+    }
+
     const profileComplete = updated.weight > 0 && updated.height > 0
     return { ...updated, profileComplete }
+  }
+
+  // Returns the requesting patient's weight/height history, oldest first.
+  async getMetrics(clerkId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { clerkId },
+      include: { patient: true },
+    })
+
+    if (!user?.patient) {
+      throw new NotFoundException('Patient profile not found')
+    }
+
+    return this.prisma.patientMetric.findMany({
+      where: { patientId: user.patient.id },
+      orderBy: { recordedAt: 'asc' },
+    })
   }
 
   async updatePicture(clerkId: string, filename: string) {
