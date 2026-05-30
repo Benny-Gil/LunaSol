@@ -3,6 +3,7 @@ import {
   PrismaClient,
   Role,
   AppointmentStatus,
+  SymptomSeverity,
 } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
@@ -141,6 +142,7 @@ async function main() {
 
   // ── 1. Clean slate (reverse FK order) ────────────────────────────────────
   console.log('  ✕ Clearing existing data …');
+  await prisma.symptomLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.prescription.deleteMany();
   await prisma.consultationRecord.deleteMany();
@@ -348,6 +350,35 @@ async function main() {
     });
   }
 
+  // ── 6b. Create symptom logs (patient-owned history) ──────────────────────
+  console.log('  + Creating symptom logs …');
+
+  // A small diary per patient so the doctor's Patient History panel has data.
+  const symptomLogsByPatient = [
+    [
+      { description: 'Dry, tickly cough that worsens at night. No fever.', severity: SymptomSeverity.MILD, loggedAt: pastDate(10, 21) },
+      { description: 'Cough now bringing up clear phlegm, mild wheezing after walking.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(6, 8) },
+      { description: 'Chest feels tight in the mornings, short of breath on the stairs.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(2, 7) },
+    ],
+    [
+      { description: 'Increased thirst and frequent urination over the past week.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(8, 9) },
+      { description: 'Persistent fatigue in the afternoons, occasional blurred vision.', severity: SymptomSeverity.SEVERE, loggedAt: pastDate(3, 16) },
+    ],
+    [
+      { description: 'Red, itchy patch on left forearm, slightly warm to touch.', severity: SymptomSeverity.MILD, loggedAt: pastDate(5, 19) },
+      { description: 'Rash spreading and more inflamed despite moisturiser.', severity: SymptomSeverity.MODERATE, loggedAt: pastDate(1, 20) },
+    ],
+  ];
+
+  let symptomLogCount = 0;
+  for (let i = 0; i < symptomLogsByPatient.length; i++) {
+    const entries = symptomLogsByPatient[i]!;
+    await prisma.symptomLog.createMany({
+      data: entries.map((e) => ({ ...e, patientId: patientProfiles[i]!.id })),
+    });
+    symptomLogCount += entries.length;
+  }
+
   // ── 7. Create notifications ──────────────────────────────────────────────
   console.log('  + Creating notifications …');
 
@@ -464,6 +495,7 @@ async function main() {
     consultationRecords: await prisma.consultationRecord.count(),
     prescriptions: await prisma.prescription.count(),
     notifications: await prisma.notification.count(),
+    symptomLogs: await prisma.symptomLog.count(),
   };
 
   console.log('\n✅ Seed complete!');

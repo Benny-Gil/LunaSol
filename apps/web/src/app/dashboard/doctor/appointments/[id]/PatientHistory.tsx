@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@clerk/nextjs'
 import { History, ChevronDown, ChevronUp } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { SymptomLog } from '@lunasol/types'
+import { SeverityBadge } from '@/lib/symptoms'
 
 interface Prescription {
   id: string
@@ -25,20 +27,27 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
   const { getToken } = useAuth()
   const [open, setOpen] = useState(false)
   const [history, setHistory] = useState<Appointment[]>([])
+  const [symptoms, setSymptoms] = useState<SymptomLog[]>([])
   const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(async () => {
-    try {
-      const token = await getToken()
-      const data: Appointment[] = await apiFetch(`/appointments/mine?patientId=${patientId}`, { token: token || undefined })
-      setHistory(
-        data.filter((a) => a.id !== currentAppointmentId && a.status === 'COMPLETED'),
-      )
-    } catch {
-      // fall through
-    } finally {
-      setLoaded(true)
+    const token = await getToken()
+
+    // Fetch consultations and symptom logs concurrently and independently, so
+    // one failing (e.g. permissions) doesn't blank or delay the other.
+    const [appts, logs] = await Promise.allSettled([
+      apiFetch(`/appointments/mine?patientId=${patientId}`, { token: token || undefined }) as Promise<Appointment[]>,
+      apiFetch(`/symptom-logs/patient/${patientId}`, { token: token || undefined }) as Promise<SymptomLog[]>,
+    ])
+
+    if (appts.status === 'fulfilled') {
+      setHistory(appts.value.filter((a) => a.id !== currentAppointmentId && a.status === 'COMPLETED'))
     }
+    if (logs.status === 'fulfilled') {
+      setSymptoms(logs.value)
+    }
+
+    setLoaded(true)
   }, [getToken, patientId, currentAppointmentId])
 
   useEffect(() => { if (open && !loaded) load() }, [open, loaded, load])
@@ -60,10 +69,33 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
         <div style={{ padding: '0 28px 24px', borderTop: '1px solid #f3f4f6' }}>
           {!loaded ? (
             <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>Loading...</p>
-          ) : history.length === 0 ? (
-            <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No prior consultations with this patient.</p>
+          ) : history.length === 0 && symptoms.length === 0 ? (
+            <p style={{ color: '#9ca3af', fontSize: '14px', paddingTop: '20px', margin: 0 }}>No prior consultations or symptom logs for this patient.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingTop: '20px' }}>
+              {symptoms.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>Reported symptoms</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {symptoms.map((s) => (
+                      <div key={s.id} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                          <SeverityBadge severity={s.severity} />
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280' }}>
+                            {new Date(s.loggedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{s.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {history.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '13px', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px' }}>Prior consultations</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {history.map((a) => {
                 const date = a.slot ? new Date(a.slot.startTime) : null
                 return (
@@ -89,7 +121,10 @@ export default function PatientHistory({ patientId, currentAppointmentId }: { pa
                     )}
                   </div>
                 )
-              })}
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

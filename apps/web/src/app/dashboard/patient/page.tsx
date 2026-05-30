@@ -1,6 +1,6 @@
 import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
-import { Video, Bot, FolderOpen, Calendar } from 'lucide-react'
+import { Video, Bot, FolderOpen, Calendar, Activity } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 
 export default async function PatientDashboard() {
@@ -23,6 +23,7 @@ export default async function PatientDashboard() {
           <a href="/doctors" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Find Doctors</a>
           <a href="/dashboard/patient/appointments" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Appointments</a>
           <a href="/dashboard/patient/records" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Records</a>
+          <a href="/dashboard/patient/symptoms" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Symptom Log</a>
           <a href="/dashboard/messages" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Messages</a>
           <a href="/dashboard/patient/profile" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Profile</a>
           <NotificationBell />
@@ -48,6 +49,7 @@ export default async function PatientDashboard() {
             { Icon: Video, title: 'Virtual Consultations', href: '/dashboard/patient/appointments', desc: 'Join or schedule a video call with a practitioner.', count: 'No active calls' },
             { Icon: Calendar, title: 'Appointments', href: '/dashboard/patient/appointments', desc: 'View, reschedule, or book a doctor appointment.', count: '0 upcoming' },
             { Icon: FolderOpen, title: 'Medical Records', href: '/dashboard/patient/records', desc: 'Securely access prescriptions and test results.', count: 'Updated recently' },
+            { Icon: Activity, title: 'Symptom Log', href: '/dashboard/patient/symptoms', desc: 'Track symptoms over time and share them with your doctor.', count: 'Log a symptom' },
           ].map(({ Icon, title, href, desc, count }) => (
             <a key={title} href={href} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)', textDecoration: 'none', display: 'block' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>

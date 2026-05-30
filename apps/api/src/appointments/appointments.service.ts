@@ -43,6 +43,20 @@ export class AppointmentsService {
     return { user, doctor: user.doctor }
   }
 
+  /**
+   * Authorize a doctor's access to a patient's data: a doctor "treats" a patient
+   * if at least one appointment links them. Other modules (e.g. symptom-logs) use
+   * this to gate cross-patient reads instead of querying appointments directly.
+   */
+  async assertDoctorTreatsPatient(clerkId: string, patientId: string) {
+    const { doctor } = await this.getDoctorProfile(clerkId)
+    const appointment = await this.prisma.appointment.findFirst({
+      where: { doctorId: doctor.id, patientId },
+      select: { id: true },
+    })
+    if (!appointment) throw new ForbiddenException('Not your patient')
+  }
+
   private async createNotification(recipientId: string, type: string, message: string) {
     const notification = await this.prisma.notification.create({ data: { recipientId, type, message } })
     this.notifications.emitToUser(recipientId, 'notification', {
