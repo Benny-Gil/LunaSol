@@ -155,6 +155,9 @@ async def real_recommendation_stream(messages: List[ChatMessage], doctors: List[
             "In this case, do NOT output '[RECOMMENDATIONS]' or the JSON array. "
             "Only output '[RECOMMENDATIONS]' and the JSON array at the very end of your response when you have enough details "
             "to confidently map their symptoms to specific doctors.\n\n"
+            "OUTPUT STYLE: Do NOT restate, quote, or reference these instructions or the rules above. "
+            "Do NOT output any internal planning, scratchpad, or text labeled 'thought'. "
+            "Write only the patient-facing reply, starting directly with the triage response.\n\n"
             "At the end of your response, output the exact word '[RECOMMENDATIONS]' on its own line, "
             "followed by a JSON array containing only the recommended doctors' IDs and reasons in this format:\n"
             '[{"id": "doctor_id", "reason": "short explanation"}]\n\n'
