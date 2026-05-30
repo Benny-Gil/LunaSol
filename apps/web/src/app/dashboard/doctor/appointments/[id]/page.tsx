@@ -8,13 +8,20 @@ import { apiFetch } from '@/lib/api'
 import ConsultationSession from '@/components/ConsultationSession'
 import ConsultationPanel from './ConsultationPanel'
 import PatientHistory from './PatientHistory'
+import PatientOverview from './PatientOverview'
 
 interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
   livekitRoom: string | null
   isInstant: boolean
-  patient: { id: string; name: string; profilePictureUrl: string | null }
+  patient: {
+    id: string
+    name: string
+    profilePictureUrl: string | null
+    birthday: string | null
+    medicalHistory: string | null
+  }
   slot: { startTime: string; endTime: string } | null
 }
 
@@ -149,6 +156,8 @@ export default function DoctorAppointmentDetailPage() {
                   </>
                 )}
               </div>
+
+              <PatientOverview patient={appt.patient} currentAppointmentId={appt.id} />
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '24px', flexWrap: 'wrap' }}>
                 {appt.status === 'PENDING' && (
