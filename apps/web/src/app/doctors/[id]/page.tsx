@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth, Show, UserButton } from '@clerk/nextjs'
-import { User, Calendar, Clock, ArrowLeft, Zap } from 'lucide-react'
+import { User, Calendar, Clock, ArrowLeft, Zap, MessageSquare } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Doctor {
@@ -291,6 +291,13 @@ export default function DoctorDetailPage() {
             }}
           >
             {booking ? 'Booking...' : !isSignedIn ? 'Sign in to book' : 'Book appointment'}
+          </button>
+
+          <button
+            onClick={() => router.push(isSignedIn ? `/dashboard/messages?doctorId=${id}` : '/sign-in')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', padding: '12px', background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginTop: '10px' }}
+          >
+            <MessageSquare size={16} /> Message doctor
           </button>
 
           {!isSignedIn && (
