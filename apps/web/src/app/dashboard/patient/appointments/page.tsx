@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { Calendar, Clock, Zap } from 'lucide-react'
+import { Calendar, Clock, Zap, Hourglass } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { formatTimeRemaining, useNow } from '@/lib/time'
 
 interface Appointment {
   id: string
@@ -119,6 +120,8 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
   const isInstant = appt.isInstant || !appt.slot
   const date = appt.slot ? new Date(appt.slot.startTime) : null
   const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED'
+  const now = useNow()
+  const timeRemaining = canCancel && appt.slot ? formatTimeRemaining(appt.slot.startTime, now) : null
 
   return (
     <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '20px 24px', cursor: 'pointer' }} onClick={onClick}>
@@ -145,6 +148,11 @@ function AppointmentCard({ appt, onCancel, cancelling, onClick }: {
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
               <Clock size={14} /> {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
             </span>
+            {timeRemaining && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
+                <Hourglass size={14} /> {timeRemaining}
+              </span>
+            )}
           </>
         )}
       </div>
