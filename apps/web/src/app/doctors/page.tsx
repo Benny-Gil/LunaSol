@@ -339,9 +339,9 @@ export default function DoctorsPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <Sparkles size={20} color="#6366f1" style={{ filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.4))' }} />
-                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>AI-Powered Doctor Matcher</h2>
+                <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Find the right specialist</h2>
               </div>
-              <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Describe your symptoms, and MedGemma AI will recommend the most appropriate specialists.</p>
+              <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Describe your symptoms and we&apos;ll suggest the right specialties.</p>
             </div>
             
             {(messages.length > 0 || reasoning || recommendedDoctors.length > 0 || aiLoading) && (
@@ -496,7 +496,7 @@ export default function DoctorsPage() {
                   ) : (
                     <>
                       <Send size={15} />
-                      <span>Find My Doctor Match</span>
+                      <span>Find a specialist</span>
                     </>
                   )}
                 </button>
@@ -523,7 +523,7 @@ export default function DoctorsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: aiLoading ? '#22c55e' : '#64748b', animation: aiLoading ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none' }} />
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#475569', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    {aiLoading ? 'MedGemma 1.5 Chat Active' : 'MedGemma Triage Session'}
+                    {aiLoading ? 'Matching in progress' : 'Symptom assistant'}
                   </span>
                 </div>
 
@@ -578,7 +578,7 @@ export default function DoctorsPage() {
                           color: '#64748b',
                           alignSelf: isUser ? 'flex-end' : 'flex-start'
                         }}>
-                          {isUser ? 'You (Patient)' : 'MedGemma AI'}
+                          {isUser ? 'You' : 'Symptom assistant'}
                         </span>
 
                         {bubbleIsEmergency && (
@@ -635,7 +635,7 @@ export default function DoctorsPage() {
                   type="text"
                   value={followUpQuery}
                   onChange={(e) => setFollowUpQuery(e.target.value)}
-                  placeholder="Reply to MedGemma or provide more details..."
+                  placeholder="Reply or provide more details..."
                   disabled={aiLoading}
                   style={{
                     flex: 1,
@@ -691,7 +691,7 @@ export default function DoctorsPage() {
             <div style={{ marginTop: '36px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={16} color="#8b5cf6" />
-                <span>AI Recommended Specialist Matching ({recommendedDoctors.length})</span>
+                <span>Suggested specialists ({recommendedDoctors.length})</span>
                 {aiError && <span style={{ fontSize: '12px', color: '#ef4444', fontWeight: 500 }}>({aiError})</span>}
               </h3>
               
@@ -776,7 +776,7 @@ export default function DoctorsPage() {
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, marginBottom: '4px', fontSize: '12px' }}>
                           <Sparkles size={12} color="#7c3aed" />
-                          <span>AI MATCH RATIONALE</span>
+                          <span>WHY THIS MATCH</span>
                         </div>
                         {doc.reason}
                       </div>
