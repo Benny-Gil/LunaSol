@@ -292,6 +292,23 @@ export default function DoctorsPage() {
     scrollToBottom()
   }, [messages, reasoning, scrollToBottom])
 
+  // Snapshot the latest AI triage so a patient can later attach it in chat
+  // (read by the messages composer under the 'lunasol.aiSuggestion' key).
+  useEffect(() => {
+    if (recommendedDoctors.length === 0) return
+    const symptoms = messages.find((m) => m.role === 'user')?.content || ''
+    const snapshot = {
+      symptoms,
+      reasoning: reasoning || null,
+      recommendations: recommendedDoctors.map((d) => ({ name: d.name, specialization: d.specialization, reason: d.reason })),
+    }
+    try {
+      sessionStorage.setItem('lunasol.aiSuggestion', JSON.stringify(snapshot))
+    } catch {
+      // sessionStorage unavailable — non-critical
+    }
+  }, [recommendedDoctors, messages, reasoning])
+
   const fetchDoctors = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams()

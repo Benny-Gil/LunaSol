@@ -7,9 +7,10 @@ import { AppointmentsModule } from './appointments/appointments.module'
 import { ConsultationsModule } from './consultations/consultations.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { AiModule } from './ai/ai.module'
+import { ChatModule } from './chat/chat.module'
 
 @Module({
-  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, ConsultationsModule, NotificationsModule, AiModule],
+  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, ConsultationsModule, NotificationsModule, AiModule, ChatModule],
 })
 export class AppModule {}
 

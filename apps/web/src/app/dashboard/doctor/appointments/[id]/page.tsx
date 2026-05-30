@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { ArrowLeft, Calendar, Clock, User, Video, Zap } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, User, Video, Zap, MessageSquare } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ConsultationSession from '@/components/ConsultationSession'
 import ConsultationPanel from './ConsultationPanel'
@@ -178,6 +178,12 @@ export default function DoctorAppointmentDetailPage() {
                     </button>
                   </>
                 )}
+                <button
+                  onClick={() => router.push(`/dashboard/messages?patientId=${appt.patient.id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', background: 'none', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#374151', cursor: 'pointer' }}
+                >
+                  <MessageSquare size={16} /> Message patient
+                </button>
               </div>
               {appt.status === 'CONFIRMED' && !canJoin && (
                 <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '12px' }}>

@@ -23,6 +23,7 @@ export default async function PatientDashboard() {
           <a href="/doctors" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Find Doctors</a>
           <a href="/dashboard/patient/appointments" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Appointments</a>
           <a href="/dashboard/patient/records" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Records</a>
+          <a href="/dashboard/messages" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Messages</a>
           <a href="/dashboard/patient/profile" style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px', fontWeight: 500 }}>Profile</a>
           <NotificationBell />
           <UserButton />

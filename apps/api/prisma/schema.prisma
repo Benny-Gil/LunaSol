@@ -20,6 +20,14 @@ enum AppointmentStatus {
   COMPLETED
 }
 
+enum MessageAttachmentType {
+  PRESCRIPTION
+  NOTE
+  APPOINTMENT
+  AI_SUGGESTION
+  SYMPTOM
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -32,14 +40,15 @@ model User {
   patient       PatientProfile?
   doctor        DoctorProfile?
   notifications Notification[]
+  sentMessages  Message[]       @relation("MessageSender")
 }
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 
 model PatientProfile {
-  id                String        @id @default(cuid())
-  userId            String        @unique
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String         @id @default(cuid())
+  userId            String         @unique
+  user              User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name              String
   birthday          DateTime
   weight            Float
@@ -49,6 +58,7 @@ model PatientProfile {
   address           String?
   medicalHistory    String?
   appointments      Appointment[]
+  conversations     Conversation[]
 }
 
 model DoctorProfile {
@@ -63,6 +73,7 @@ model DoctorProfile {
   acceptingInstant  Boolean            @default(false)
   slots             AvailabilitySlot[]
   appointments      Appointment[]
+  conversations     Conversation[]
 }
 
 // ─── Availability ─────────────────────────────────────────────────────────────
@@ -80,19 +91,19 @@ model AvailabilitySlot {
 // ─── Appointments ─────────────────────────────────────────────────────────────
 
 model Appointment {
-  id        String             @id @default(cuid())
-  patientId String
-  patient   PatientProfile     @relation(fields: [patientId], references: [id])
-  doctorId  String
-  doctor    DoctorProfile      @relation(fields: [doctorId], references: [id])
-  slotId    String?            @unique
-  slot      AvailabilitySlot?  @relation(fields: [slotId], references: [id])
-  isInstant Boolean            @default(false)
-  status      AppointmentStatus  @default(PENDING)
+  id          String              @id @default(cuid())
+  patientId   String
+  patient     PatientProfile      @relation(fields: [patientId], references: [id])
+  doctorId    String
+  doctor      DoctorProfile       @relation(fields: [doctorId], references: [id])
+  slotId      String?             @unique
+  slot        AvailabilitySlot?   @relation(fields: [slotId], references: [id])
+  isInstant   Boolean             @default(false)
+  status      AppointmentStatus   @default(PENDING)
   livekitRoom String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  record    ConsultationRecord?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  record      ConsultationRecord?
 }
 
 // ─── Consultation ──────────────────────────────────────────────────────────────
@@ -129,4 +140,39 @@ model Notification {
   message     String
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+// One continuous conversation per patient↔doctor pair (spans all appointments).
+
+model Conversation {
+  id        String         @id @default(cuid())
+  patientId String
+  patient   PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    DoctorProfile  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  Message[]
+
+  @@unique([patientId, doctorId])
+  @@index([doctorId])
+}
+
+model Message {
+  id             String                 @id @default(cuid())
+  conversationId String
+  conversation   Conversation           @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User                   @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  body           String?
+  // Optional rich attachment: a denormalized snapshot captured at send-time,
+  // plus an optional source id for deep-linking. See MessageAttachmentType.
+  attachmentType MessageAttachmentType?
+  attachment     Json?
+  refId          String?
+  readAt         DateTime?
+  createdAt      DateTime               @default(now())
+
+  @@index([conversationId, createdAt])
 }
