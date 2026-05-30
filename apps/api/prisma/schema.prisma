@@ -28,6 +28,12 @@ enum MessageAttachmentType {
   SYMPTOM
 }
 
+enum SymptomSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -59,6 +65,7 @@ model PatientProfile {
   medicalHistory    String?
   appointments      Appointment[]
   conversations     Conversation[]
+  symptomLogs       SymptomLog[]
 }
 
 model DoctorProfile {
@@ -175,4 +182,20 @@ model Message {
   createdAt      DateTime               @default(now())
 
   @@index([conversationId, createdAt])
+}
+
+// ─── Symptom Log ────────────────────────────────────────────────────────────────
+// Patient-owned diary of symptoms over time; shareable with a treating doctor.
+
+model SymptomLog {
+  id          String          @id @default(cuid())
+  patientId   String
+  patient     PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  description String
+  severity    SymptomSeverity
+  loggedAt    DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([patientId, loggedAt])
 }

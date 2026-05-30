@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Show, UserButton } from '@clerk/nextjs'
-import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse, Info } from 'lucide-react'
+import { Show, UserButton, useAuth, useUser } from '@clerk/nextjs'
+import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse, Info, ClipboardPlus, Check } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
-import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '@lunasol/types'
+import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS, SymptomSeverity } from '@lunasol/types'
+import { apiFetch } from '../../lib/api'
+import { SEVERITY_ORDER, SEVERITY_STYLES } from '../../lib/symptoms'
 
 interface Doctor {
   id: string
@@ -254,6 +256,88 @@ function DisclaimerTooltip() {
         <strong style={{ fontWeight: 700, display: 'block', marginBottom: '4px', fontSize: '13.5px' }}>AI Triage Advisor (Informational Only)</strong>
         This tool utilizes clinical-grade language models to map described symptoms to specialties within our network. It <strong>does not diagnose illnesses, prescribe medications, or replace professional medical advice</strong>. If you are experiencing a severe, sudden, or life-threatening situation, please call emergency responders (e.g. 911) immediately.
       </div>
+    </div>
+  )
+}
+
+// Lets a signed-in patient persist the symptoms they described to the matcher
+// as a SymptomLog entry, so it shows up in their log and to their doctor.
+function SaveSymptomToLog({ description }: { description: string }) {
+  const { getToken } = useAuth()
+  const { isSignedIn, user } = useUser()
+  const [open, setOpen] = useState(false)
+  const [severity, setSeverity] = useState<SymptomSeverity>('MILD')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  // Only patients have somewhere to save this; hide for everyone else.
+  const isPatient = isSignedIn && user?.publicMetadata?.role === 'patient'
+  if (!isPatient || !description.trim()) return null
+
+  async function save() {
+    setSaving(true)
+    try {
+      const token = await getToken()
+      await apiFetch('/symptom-logs', {
+        token: token || undefined,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: description.trim(), severity }),
+      })
+      setSaved(true)
+      setOpen(false)
+    } catch (err: any) {
+      alert(err.message || 'Failed to save to your symptom log.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (saved) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', color: '#15803d', fontSize: '13px', fontWeight: 600 }}>
+        <Check size={15} /> Saved to your symptom log
+      </div>
+    )
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}
+      >
+        <ClipboardPlus size={15} color="#6366f1" /> Save to my symptom log
+      </button>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Severity:</span>
+      <select
+        value={severity}
+        onChange={(e) => setSeverity(e.target.value as SymptomSeverity)}
+        style={{ padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer' }}
+      >
+        {SEVERITY_ORDER.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
+      </select>
+      <button
+        type="button"
+        onClick={save}
+        disabled={saving}
+        style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: saving ? '#94a3b8' : '#6366f1', color: '#ffffff', fontSize: '13px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer' }}
+      >
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#64748b', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+      >
+        <X size={13} /> Cancel
+      </button>
     </div>
   )
 }
@@ -715,6 +799,11 @@ export default function DoctorsPage() {
                   )
                 })}
               </div>
+
+              {/* Offer to persist the described symptoms (patients only). */}
+              {!aiLoading && (
+                <SaveSymptomToLog description={messages.find((m) => m.role === 'user')?.content || ''} />
+              )}
 
               {/* Chat Input Bar for follow-up */}
               <form onSubmit={handleFollowUpSubmit} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
