@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { ScheduleModule } from '@nestjs/schedule'
 import { PrismaModule } from './prisma/prisma.module'
 import { AuthModule } from './auth/auth.module'
 import { PatientsModule } from './patients/patients.module'
@@ -9,9 +10,10 @@ import { NotificationsModule } from './notifications/notifications.module'
 import { AiModule } from './ai/ai.module'
 import { ChatModule } from './chat/chat.module'
 import { SymptomLogsModule } from './symptom-logs/symptom-logs.module'
+import { RemindersModule } from './reminders/reminders.module'
 
 @Module({
-  imports: [PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, ConsultationsModule, NotificationsModule, AiModule, ChatModule, SymptomLogsModule],
+  imports: [ScheduleModule.forRoot(), PrismaModule, AuthModule, PatientsModule, DoctorsModule, AppointmentsModule, ConsultationsModule, NotificationsModule, AiModule, ChatModule, SymptomLogsModule, RemindersModule],
 })
 export class AppModule {}
 

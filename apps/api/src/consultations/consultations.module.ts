@@ -7,5 +7,6 @@ import { AppointmentsModule } from '../appointments/appointments.module'
   imports: [AppointmentsModule],
   controllers: [ConsultationsController],
   providers: [ConsultationsService],
+  exports: [ConsultationsService],
 })
 export class ConsultationsModule {}
