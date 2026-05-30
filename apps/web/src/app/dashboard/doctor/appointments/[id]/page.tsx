@@ -117,9 +117,9 @@ export default function DoctorAppointmentDetailPage() {
         </button>
 
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading...</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading...</p>
         ) : !appt ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
         ) : (
           <>
             <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '28px' }}>
@@ -195,7 +195,7 @@ export default function DoctorAppointmentDetailPage() {
                 </button>
               </div>
               {appt.status === 'CONFIRMED' && !canJoin && (
-                <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '12px' }}>
+                <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
                   The session opens from {new Date(start - JOIN_LEAD_MS).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} on the day of the appointment.
                 </p>
               )}

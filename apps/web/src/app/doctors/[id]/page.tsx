@@ -226,7 +226,7 @@ export default function DoctorDetailPage() {
           {slots.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <Clock size={32} color="#d1d5db" style={{ margin: '0 auto 12px' }} />
-              <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>No available slots in the next 14 days.</p>
+              <p style={{ color: '#6b7280', fontSize: '14px', margin: 0 }}>No available slots in the next 14 days.</p>
             </div>
           ) : (
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -301,7 +301,7 @@ export default function DoctorDetailPage() {
           </button>
 
           {!isSignedIn && (
-            <p style={{ fontSize: '12px', color: '#9ca3af', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
+            <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
               You need to be signed in to book.
             </p>
           )}

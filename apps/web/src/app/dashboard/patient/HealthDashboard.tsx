@@ -153,7 +153,7 @@ export default function HealthDashboard() {
         </div>
 
         {loading ? (
-          <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>Loading…</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Loading…</p>
         ) : metrics.length === 0 ? (
           <p style={{ fontSize: '14px', color: '#6b7280', margin: 0, lineHeight: 1.5 }}>
             No measurements yet. Update your weight and height on your{' '}
@@ -186,7 +186,7 @@ export default function HealthDashboard() {
         </div>
 
         {loading ? (
-          <p style={{ fontSize: '14px', color: '#9ca3af', margin: 0 }}>Loading…</p>
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>Loading…</p>
         ) : !nextAppt ? (
           <div>
             <p style={{ fontSize: '14px', color: '#6b7280', margin: '0 0 16px 0', lineHeight: 1.5 }}>
