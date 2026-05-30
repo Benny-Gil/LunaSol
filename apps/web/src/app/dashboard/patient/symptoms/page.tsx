@@ -5,30 +5,7 @@ import { useAuth } from '@clerk/nextjs'
 import { Activity, Plus, Pencil, Trash2, X } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { SymptomLog, SymptomSeverity } from '@lunasol/types'
-
-const SEVERITY_OPTIONS: SymptomSeverity[] = ['MILD', 'MODERATE', 'SEVERE']
-
-const SEVERITY_STYLES: Record<SymptomSeverity, { bg: string; color: string; label: string }> = {
-  MILD: { bg: '#f0fdf4', color: '#15803d', label: 'Mild' },
-  MODERATE: { bg: '#fffbeb', color: '#b45309', label: 'Moderate' },
-  SEVERE: { bg: '#fef2f2', color: '#b91c1c', label: 'Severe' },
-}
-
-/** YYYY-MM-DD for an <input type="date">, in local time. */
-function toDateInput(iso: string): string {
-  const d = new Date(iso)
-  const off = d.getTimezoneOffset() * 60_000
-  return new Date(d.getTime() - off).toISOString().slice(0, 10)
-}
-
-function SeverityBadge({ severity }: { severity: SymptomSeverity }) {
-  const s = SEVERITY_STYLES[severity]
-  return (
-    <span style={{ fontSize: '12px', fontWeight: 700, color: s.color, background: s.bg, padding: '3px 10px', borderRadius: '12px' }}>
-      {s.label}
-    </span>
-  )
-}
+import { SEVERITY_ORDER, SEVERITY_STYLES, SeverityBadge, dateInputToISO, isoToDateInput, todayDateInput } from '@/lib/symptoms'
 
 export default function SymptomsPage() {
   const { getToken } = useAuth()
@@ -39,7 +16,7 @@ export default function SymptomsPage() {
   // Create form
   const [description, setDescription] = useState('')
   const [severity, setSeverity] = useState<SymptomSeverity>('MILD')
-  const [loggedAt, setLoggedAt] = useState(() => toDateInput(new Date().toISOString()))
+  const [loggedAt, setLoggedAt] = useState(() => todayDateInput())
   const [saving, setSaving] = useState(false)
 
   // Inline edit
@@ -47,6 +24,7 @@ export default function SymptomsPage() {
   const [editDescription, setEditDescription] = useState('')
   const [editSeverity, setEditSeverity] = useState<SymptomSeverity>('MILD')
   const [editLoggedAt, setEditLoggedAt] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -78,12 +56,12 @@ export default function SymptomsPage() {
         body: JSON.stringify({
           description: description.trim(),
           severity,
-          loggedAt: new Date(loggedAt).toISOString(),
+          loggedAt: dateInputToISO(loggedAt),
         }),
       })
       setDescription('')
       setSeverity('MILD')
-      setLoggedAt(toDateInput(new Date().toISOString()))
+      setLoggedAt(todayDateInput())
       await load()
     } catch (err: any) {
       alert(err.message || 'Failed to save symptom.')
@@ -96,12 +74,13 @@ export default function SymptomsPage() {
     setEditingId(log.id)
     setEditDescription(log.description)
     setEditSeverity(log.severity)
-    setEditLoggedAt(toDateInput(log.loggedAt))
+    setEditLoggedAt(isoToDateInput(log.loggedAt))
   }
 
   async function handleUpdate(e: FormEvent) {
     e.preventDefault()
-    if (!editingId || !editDescription.trim()) return
+    if (!editingId || !editDescription.trim() || editSaving) return
+    setEditSaving(true)
     try {
       const token = await getToken()
       await apiFetch(`/symptom-logs/${editingId}`, {
@@ -111,13 +90,15 @@ export default function SymptomsPage() {
         body: JSON.stringify({
           description: editDescription.trim(),
           severity: editSeverity,
-          loggedAt: new Date(editLoggedAt).toISOString(),
+          loggedAt: dateInputToISO(editLoggedAt),
         }),
       })
       setEditingId(null)
       await load()
     } catch (err: any) {
       alert(err.message || 'Failed to update symptom.')
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -169,12 +150,12 @@ export default function SymptomsPage() {
             <div style={{ flex: '1', minWidth: '140px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>Severity</label>
               <select value={severity} onChange={(e) => setSeverity(e.target.value as SymptomSeverity)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                {SEVERITY_OPTIONS.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
+                {SEVERITY_ORDER.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
               </select>
             </div>
             <div style={{ flex: '1', minWidth: '140px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>Date</label>
-              <input type="date" value={loggedAt} max={toDateInput(new Date().toISOString())} onChange={(e) => setLoggedAt(e.target.value)} style={inputStyle} />
+              <input type="date" value={loggedAt} max={todayDateInput()} onChange={(e) => setLoggedAt(e.target.value)} style={inputStyle} />
             </div>
             <button
               type="submit"
@@ -215,14 +196,14 @@ export default function SymptomsPage() {
                       <div style={{ flex: '1', minWidth: '120px' }}>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>Severity</label>
                         <select value={editSeverity} onChange={(e) => setEditSeverity(e.target.value as SymptomSeverity)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                          {SEVERITY_OPTIONS.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
+                          {SEVERITY_ORDER.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
                         </select>
                       </div>
                       <div style={{ flex: '1', minWidth: '120px' }}>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '4px' }}>Date</label>
-                        <input type="date" value={editLoggedAt} max={toDateInput(new Date().toISOString())} onChange={(e) => setEditLoggedAt(e.target.value)} style={inputStyle} />
+                        <input type="date" value={editLoggedAt} max={todayDateInput()} onChange={(e) => setEditLoggedAt(e.target.value)} style={inputStyle} />
                       </div>
-                      <button type="submit" style={{ padding: '10px 18px', borderRadius: '8px', border: 'none', background: '#10b981', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>Save</button>
+                      <button type="submit" disabled={editSaving} style={{ padding: '10px 18px', borderRadius: '8px', border: 'none', background: editSaving ? '#9ca3af' : '#10b981', color: '#ffffff', fontSize: '14px', fontWeight: 700, cursor: editSaving ? 'not-allowed' : 'pointer' }}>{editSaving ? 'Saving…' : 'Save'}</button>
                       <button type="button" onClick={() => setEditingId(null)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#ffffff', color: '#6b7280', fontSize: '14px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}><X size={14} /> Cancel</button>
                     </div>
                   </form>

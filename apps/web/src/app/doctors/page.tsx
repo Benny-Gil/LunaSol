@@ -7,6 +7,7 @@ import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, Arro
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
 import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS, SymptomSeverity } from '@lunasol/types'
 import { apiFetch } from '../../lib/api'
+import { SEVERITY_ORDER, SEVERITY_STYLES } from '../../lib/symptoms'
 
 interface Doctor {
   id: string
@@ -261,12 +262,6 @@ function DisclaimerTooltip() {
 
 // Lets a signed-in patient persist the symptoms they described to the matcher
 // as a SymptomLog entry, so it shows up in their log and to their doctor.
-const SEVERITY_LABELS: { value: SymptomSeverity; label: string }[] = [
-  { value: 'MILD', label: 'Mild' },
-  { value: 'MODERATE', label: 'Moderate' },
-  { value: 'SEVERE', label: 'Severe' },
-]
-
 function SaveSymptomToLog({ description }: { description: string }) {
   const { getToken } = useAuth()
   const { isSignedIn, user } = useUser()
@@ -326,7 +321,7 @@ function SaveSymptomToLog({ description }: { description: string }) {
         onChange={(e) => setSeverity(e.target.value as SymptomSeverity)}
         style={{ padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', color: '#0f172a', background: '#ffffff', cursor: 'pointer' }}
       >
-        {SEVERITY_LABELS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        {SEVERITY_ORDER.map((s) => <option key={s} value={s}>{SEVERITY_STYLES[s].label}</option>)}
       </select>
       <button
         type="button"
