@@ -443,8 +443,26 @@ export default function DoctorsPage() {
             )}
           </div>
 
-          {/* 2. Symptom Input Area & Conversational Flow */}
-          {messages.length === 0 ? (
+          {/* 2. Symptom Input Area & Conversational Flow.
+                When the AI service is unavailable, hide both the form and the
+                chat and point users to the directory below as a fallback. */}
+          {aiError ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              color: '#475569',
+              fontSize: '14px',
+              lineHeight: '1.5'
+            }}>
+              <Info size={18} color="#94a3b8" style={{ flexShrink: 0, marginTop: '1px' }} />
+              <span>Smart matching is temporarily unavailable — browse the directory below.</span>
+            </div>
+          ) : messages.length === 0 ? (
             <form onSubmit={handleAiSubmit}>
               <div style={{ position: 'relative', marginBottom: '16px' }}>
                 <textarea
