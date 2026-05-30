@@ -23,7 +23,8 @@ interface ConsultationRecord {
 interface Appointment {
   id: string
   status: string
-  slot: { startTime: string }
+  isInstant?: boolean
+  slot: { startTime: string } | null
   doctor: { name: string; specialization: string }
   record: ConsultationRecord | null
 }
@@ -73,7 +74,10 @@ export default function RecordsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {appointments.map((appt) => {
               const isOpen = expanded === appt.id
-              const date = new Date(appt.slot.startTime)
+              const date = appt.slot ? new Date(appt.slot.startTime) : null
+              const dateLabel = date
+                ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                : 'Instant consultation'
 
               return (
                 <div key={appt.id} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden' }}>
@@ -84,7 +88,7 @@ export default function RecordsPage() {
                     <div>
                       <p style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>{appt.doctor.name}</p>
                       <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-                        {appt.doctor.specialization} · {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        {appt.doctor.specialization} · {dateLabel}
                       </p>
                     </div>
                     {isOpen ? <ChevronUp size={18} color="#6b7280" /> : <ChevronDown size={18} color="#6b7280" />}

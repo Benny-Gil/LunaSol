@@ -6,6 +6,8 @@ export interface DoctorProfile {
   specialization: string
   profilePictureUrl?: string
   contactDetails?: string
+  /** Whether the doctor is currently accepting instant (on-demand) consultations. */
+  acceptingInstant?: boolean
 }
 
 export interface AvailabilitySlot {

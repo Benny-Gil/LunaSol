@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import { currentUser } from '@clerk/nextjs/server'
 import { Video, Users, Clock, ClipboardList } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
+import InstantToggle from './components/InstantToggle'
 
 export default async function DoctorDashboard() {
   const user = await currentUser()
@@ -39,6 +40,8 @@ export default async function DoctorDashboard() {
             Access and manage your patients, clinical schedule, and appointments in real-time.
           </p>
         </div>
+
+        <InstantToggle />
 
         {/* Quick Stats / Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>

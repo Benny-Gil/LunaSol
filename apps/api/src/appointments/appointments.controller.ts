@@ -2,6 +2,7 @@ import { Controller, Post, Get, Patch, Param, Body, Req, Query } from '@nestjs/c
 import { Roles } from '../auth/decorators/roles.decorator'
 import { AppointmentsService } from './appointments.service'
 import { BookAppointmentDto } from './dto/book-appointment.dto'
+import { InstantAppointmentDto } from './dto/instant-appointment.dto'
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto'
 
 @Controller('appointments')
@@ -12,6 +13,12 @@ export class AppointmentsController {
   @Post()
   book(@Req() req: any, @Body() dto: BookAppointmentDto) {
     return this.appointmentsService.book(req.user.id, dto)
+  }
+
+  @Roles('patient')
+  @Post('instant')
+  createInstant(@Req() req: any, @Body() dto: InstantAppointmentDto) {
+    return this.appointmentsService.createInstant(req.user.id, dto)
   }
 
   @Roles('patient', 'doctor')

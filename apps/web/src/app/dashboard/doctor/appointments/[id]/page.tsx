@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { ArrowLeft, Calendar, Clock, User, Video } from 'lucide-react'
+import { ArrowLeft, Calendar, Clock, User, Video, Zap } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ConsultationSession from '@/components/ConsultationSession'
 import ConsultationPanel from './ConsultationPanel'
@@ -13,8 +13,9 @@ interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
   livekitRoom: string | null
+  isInstant: boolean
   patient: { id: string; name: string; profilePictureUrl: string | null }
-  slot: { startTime: string; endTime: string }
+  slot: { startTime: string; endTime: string } | null
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -75,11 +76,13 @@ export default function DoctorAppointmentDetailPage() {
     return <ConsultationSession appointmentId={appt.id} onLeave={() => { setInSession(false); load() }} />
   }
 
-  const date = appt ? new Date(appt.slot.startTime) : null
+  const isInstant = !!appt?.isInstant || (!!appt && !appt.slot)
+  const date = appt?.slot ? new Date(appt.slot.startTime) : null
   const statusStyle = appt ? STATUS_COLORS[appt.status] : null
-  const start = appt ? new Date(appt.slot.startTime).getTime() : 0
-  const end = appt ? new Date(appt.slot.endTime).getTime() : 0
-  const withinWindow = now >= start - JOIN_LEAD_MS && now <= end
+  const start = appt?.slot ? new Date(appt.slot.startTime).getTime() : 0
+  const end = appt?.slot ? new Date(appt.slot.endTime).getTime() : 0
+  // Instant consultations have no slot window — joinable as soon as confirmed.
+  const withinWindow = isInstant || (now >= start - JOIN_LEAD_MS && now <= end)
   const canJoin = appt?.status === 'CONFIRMED' && !!appt.livekitRoom && withinWindow
 
   return (
@@ -123,12 +126,20 @@ export default function DoctorAppointmentDetailPage() {
               </div>
 
               <div style={{ display: 'flex', gap: '24px', paddingBottom: '24px', borderBottom: '1px solid #f3f4f6' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' }}>
-                  <Calendar size={16} color="#9ca3af" /> {date!.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' }}>
-                  <Clock size={16} color="#9ca3af" /> {date!.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                </span>
+                {isInstant || !date ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#059669', fontWeight: 600 }}>
+                    <Zap size={16} /> Instant consultation · Now
+                  </span>
+                ) : (
+                  <>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' }}>
+                      <Calendar size={16} color="#9ca3af" /> {date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#4b5563' }}>
+                      <Clock size={16} color="#9ca3af" /> {date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                    </span>
+                  </>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '24px', flexWrap: 'wrap' }}>

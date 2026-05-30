@@ -78,6 +78,7 @@ export class DoctorsService {
         bio: true,
         profilePictureUrl: true,
         contactDetails: true,
+        acceptingInstant: true,
       },
     })
 
@@ -167,6 +168,18 @@ export class DoctorsService {
     const updated = await this.prisma.doctorProfile.update({
       where: { id: user.doctor!.id },
       data: { profilePictureUrl: `/api/uploads/profile-pictures/${filename}` },
+    })
+
+    const profileComplete = !!updated.bio && updated.bio.trim().length > 0
+    return { ...updated, profileComplete }
+  }
+
+  async setAcceptingInstant(clerkId: string, acceptingInstant: boolean) {
+    const user = await this.ensureDoctorRecord(clerkId)
+
+    const updated = await this.prisma.doctorProfile.update({
+      where: { id: user.doctor!.id },
+      data: { acceptingInstant },
     })
 
     const profileComplete = !!updated.bio && updated.bio.trim().length > 0

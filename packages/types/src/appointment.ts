@@ -1,3 +1,5 @@
+import type { AvailabilitySlot } from './doctor'
+
 export const AppointmentStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
@@ -11,7 +13,10 @@ export interface Appointment {
   id: string
   patientId: string
   doctorId: string
-  slotId: string
+  /** Null for instant (on-demand) appointments, which have no pre-booked slot. */
+  slotId?: string | null
+  slot?: AvailabilitySlot | null
+  isInstant: boolean
   status: AppointmentStatus
   livekitRoom?: string
   createdAt: string
