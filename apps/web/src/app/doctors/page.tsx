@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Show, UserButton } from '@clerk/nextjs'
-import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse } from 'lucide-react'
+import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse, Info } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
 import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS } from '@lunasol/types'
 
@@ -186,6 +186,78 @@ const formatAiResponse = (content: string, isUser: boolean = false) => {
   return <div style={{ display: 'flex', flexDirection: 'column' }}>{elements}</div>
 }
 
+// Compact, accessible disclaimer indicator. Reveals the full safety/legal text
+// on hover and on keyboard focus. The text stays in the DOM (role="tooltip")
+// and is associated with the trigger via aria-describedby for screen readers.
+function DisclaimerTooltip() {
+  const [open, setOpen] = useState(false)
+  const tooltipId = 'ai-matcher-disclaimer'
+
+  return (
+    <div
+      style={{ position: 'relative', display: 'inline-flex' }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        aria-describedby={tooltipId}
+        aria-expanded={open}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '5px 10px',
+          borderRadius: '8px',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          background: 'rgba(254, 243, 199, 0.55)',
+          color: '#92400e',
+          fontSize: '12.5px',
+          fontWeight: 600,
+          cursor: 'help',
+        }}
+      >
+        <ShieldCheck size={14} color="#d97706" style={{ flexShrink: 0 }} />
+        <span>Informational only</span>
+        <Info size={13} color="#d97706" style={{ flexShrink: 0 }} />
+      </button>
+
+      <div
+        id={tooltipId}
+        role="tooltip"
+        style={{
+          position: 'absolute',
+          top: 'calc(100% + 8px)',
+          right: 0,
+          zIndex: 20,
+          width: '320px',
+          maxWidth: '80vw',
+          background: 'rgba(254, 243, 199, 0.97)',
+          border: '1px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '12px',
+          padding: '14px 16px',
+          color: '#92400e',
+          fontSize: '13px',
+          lineHeight: '1.5',
+          boxShadow: '0 12px 28px -10px rgba(146, 64, 14, 0.25)',
+          opacity: open ? 1 : 0,
+          visibility: open ? 'visible' : 'hidden',
+          transform: open ? 'translateY(0)' : 'translateY(-4px)',
+          transition: 'opacity 0.15s ease, transform 0.15s ease',
+          pointerEvents: open ? 'auto' : 'none',
+          textAlign: 'left',
+          fontWeight: 400,
+        }}
+      >
+        <strong style={{ fontWeight: 700, display: 'block', marginBottom: '4px', fontSize: '13.5px' }}>AI Triage Advisor (Informational Only)</strong>
+        This tool utilizes clinical-grade language models to map described symptoms to specialties within our network. It <strong>does not diagnose illnesses, prescribe medications, or replace professional medical advice</strong>. If you are experiencing a severe, sudden, or life-threatening situation, please call emergency responders (e.g. 911) immediately.
+      </div>
+    </div>
+  )
+}
+
 export default function DoctorsPage() {
   const router = useRouter()
   const [doctors, setDoctors] = useState<Doctor[]>([])
@@ -340,6 +412,7 @@ export default function DoctorsPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <Sparkles size={20} color="#6366f1" style={{ filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.4))' }} />
                 <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>Find the right specialist</h2>
+                <DisclaimerTooltip />
               </div>
               <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Describe your symptoms and we&apos;ll suggest the right specialties.</p>
             </div>
@@ -368,27 +441,6 @@ export default function DoctorsPage() {
                 <span>Clear Analysis</span>
               </button>
             )}
-          </div>
-
-          {/* 1. Amber Disclaimer Banner (Required Guardrail) */}
-          <div style={{
-            background: 'rgba(254, 243, 199, 0.55)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            display: 'flex',
-            gap: '14px',
-            color: '#92400e',
-            fontSize: '13.5px',
-            lineHeight: '1.5',
-            marginBottom: '24px'
-          }}>
-            <ShieldCheck size={20} color="#d97706" style={{ flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong style={{ fontWeight: 700, display: 'block', marginBottom: '2px', fontSize: '14px' }}>AI Triage Advisor (Informational Only)</strong>
-              This tool utilizes clinical-grade language models to map described symptoms to specialties within our network. It <strong>does not diagnose illnesses, prescribe medications, or replace professional medical advice</strong>. If you are experiencing a severe, sudden, or life-threatening situation, please call emergency responders (e.g. 911) immediately.
-            </div>
           </div>
 
           {/* 2. Symptom Input Area & Conversational Flow */}
