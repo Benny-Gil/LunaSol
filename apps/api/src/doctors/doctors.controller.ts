@@ -21,6 +21,7 @@ import { Roles } from '../auth/decorators/roles.decorator'
 import { Public } from '../auth/decorators/public.decorator'
 import { DoctorsService } from './doctors.service'
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto'
+import { UpdateInstantDto } from './dto/update-instant.dto'
 import { CreateAvailabilitySlotDto } from './dto/create-availability-slot.dto'
 
 const uploadDir = join(process.cwd(), 'uploads', 'profile-pictures')
@@ -66,6 +67,12 @@ export class DoctorsController implements OnModuleInit {
   @Patch('me')
   async updateProfile(@Req() req: any, @Body() dto: UpdateDoctorProfileDto) {
     return this.doctorsService.updateProfile(req.user.id, dto)
+  }
+
+  @Roles('doctor')
+  @Patch('me/instant')
+  async setAcceptingInstant(@Req() req: any, @Body() dto: UpdateInstantDto) {
+    return this.doctorsService.setAcceptingInstant(req.user.id, dto.acceptingInstant)
   }
 
   @Roles('doctor')
