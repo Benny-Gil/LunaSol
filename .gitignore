@@ -95,5 +95,12 @@ coverage/
 *.key
 !*.pub.key
 
+# Agent / tooling scratch
+.claude/
+.playwright-mcp/
+
+# Stray npm lockfile (repo uses pnpm)
+package-lock.json
+
 # Local/private files — exclude hackathon brief but track planning docs
 planning
