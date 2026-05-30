@@ -140,7 +140,7 @@ export default function NotificationBell() {
             {notifications.length === 0 ? (
               <p
                 style={{
-                  color: '#9ca3af',
+                  color: '#6b7280',
                   fontSize: '13px',
                   textAlign: 'center',
                   padding: '32px 16px',
@@ -181,7 +181,7 @@ export default function NotificationBell() {
                   <span style={{ fontSize: '13px', color: '#111827', lineHeight: 1.4 }}>
                     {n.message}
                   </span>
-                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>{timeAgo(n.createdAt)}</span>
+                  <span style={{ fontSize: '11px', color: '#6b7280' }}>{timeAgo(n.createdAt)}</span>
                 </button>
               ))
             )}

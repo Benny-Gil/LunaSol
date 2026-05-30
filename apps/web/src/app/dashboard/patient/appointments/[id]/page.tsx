@@ -77,9 +77,9 @@ export default function PatientAppointmentDetail() {
 
       <main style={{ maxWidth: '640px', margin: '0 auto', padding: '40px 24px' }}>
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading…</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading…</p>
         ) : !appt ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Appointment not found.</p>
         ) : (
           <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
@@ -119,7 +119,7 @@ export default function PatientAppointmentDetail() {
                   <Video size={16} /> Join session
                 </button>
                 {!canJoin && (
-                  <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '10px' }}>
+                  <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '10px' }}>
                     Available from {new Date(start - JOIN_LEAD_MS).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} on the day of your appointment.
                   </p>
                 )}

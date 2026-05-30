@@ -1,0 +1,21 @@
+/*
+ * Global, keyboard-only focus indicator.
+ *
+ * The app styles controls with inline `style={{}}` and in several places sets
+ * `outline: 'none'`, which removes the browser's default focus ring and leaves
+ * keyboard users with no visible focus state. This rule restores a consistent,
+ * visible focus indicator for keyboard navigation only (`:focus-visible`), so
+ * it does not show a ring on mouse clicks and keeps the visual design intact.
+ *
+ * `!important` is required to win over the inline `outline: 'none'` declarations.
+ */
+:focus-visible {
+  outline: 2px solid #4f46e5 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* Don't draw a ring on programmatically-focused / mouse-focused elements. */
+:focus:not(:focus-visible) {
+  outline: none;
+}

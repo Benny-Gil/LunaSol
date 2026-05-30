@@ -123,5 +123,5 @@ function Shell({ icon, label, accent, children }: { icon: React.ReactNode; label
 const titleStyle: React.CSSProperties = { fontSize: '14px', fontWeight: 700, color: '#111827', margin: '0 0 2px' }
 const bodyStyle: React.CSSProperties = { fontSize: '13px', color: '#374151', margin: 0, lineHeight: 1.5 }
 const metaStyle: React.CSSProperties = { fontSize: '12px', color: '#6b7280', margin: 0 }
-const noteStyle: React.CSSProperties = { fontSize: '12px', color: '#9ca3af', fontStyle: 'italic', margin: '4px 0 0' }
+const noteStyle: React.CSSProperties = { fontSize: '12px', color: '#6b7280', fontStyle: 'italic', margin: '4px 0 0' }
 const linkStyle: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, color: '#059669', textDecoration: 'none', marginTop: '8px' }

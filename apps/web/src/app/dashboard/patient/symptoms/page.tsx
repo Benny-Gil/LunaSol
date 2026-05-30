@@ -174,7 +174,7 @@ export default function SymptomsPage() {
 
         {/* List */}
         {loading ? (
-          <p style={{ color: '#9ca3af', textAlign: 'center', padding: '60px' }}>Loading symptom log…</p>
+          <p style={{ color: '#6b7280', textAlign: 'center', padding: '60px' }}>Loading symptom log…</p>
         ) : error ? (
           <p style={{ color: '#b91c1c', textAlign: 'center', padding: '40px' }}>{error}</p>
         ) : logs.length === 0 ? (
