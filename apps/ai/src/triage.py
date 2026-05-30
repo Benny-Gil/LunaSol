@@ -1,8 +1,11 @@
 import asyncio
 import json
+import logging
 from typing import List
 from src.schemas import ChatMessage, Doctor
 from src.utils import extract_recommendations
+
+logger = logging.getLogger("lunasol.ai")
 
 async def mock_recommendation_stream(messages: List[ChatMessage], doctors: List[Doctor]):
     try:
@@ -114,8 +117,9 @@ async def mock_recommendation_stream(messages: List[ChatMessage], doctors: List[
         # Emit structured data
         yield f"event: recommendations\ndata: {json.dumps(recommendations)}\n\n"
         yield "event: done\ndata: [DONE]\n\n"
-    except Exception as e:
-        yield f"event: error\ndata: {str(e)}\n\n"
+    except Exception:
+        logger.exception("recommendation stream failed")
+        yield "event: error\ndata: The recommendation service hit an error. Please try again.\n\n"
 
 async def real_recommendation_stream(messages: List[ChatMessage], doctors: List[Doctor], model):
     try:
@@ -210,5 +214,6 @@ async def real_recommendation_stream(messages: List[ChatMessage], doctors: List[
         
         yield "event: done\ndata: [DONE]\n\n"
         
-    except Exception as e:
-        yield f"event: error\ndata: {str(e)}\n\n"
+    except Exception:
+        logger.exception("recommendation stream failed")
+        yield "event: error\ndata: The recommendation service hit an error. Please try again.\n\n"
