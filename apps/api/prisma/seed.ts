@@ -254,14 +254,13 @@ async function main() {
   console.log('  + Creating confirmed appointments …');
 
   // Find open future slots for first 3 doctors (take 1st available slot each)
-  const confirmedAppointments = [];
   for (let i = 0; i < 3; i++) {
     const doctorSlots = allSlots.filter(
       (s) => s.doctorId === doctorProfiles[i]!.id && !s.isBlocked,
     );
     const slot = doctorSlots[0]!;
 
-    const appointment = await prisma.appointment.create({
+    await prisma.appointment.create({
       data: {
         patientId: patientProfiles[i]!.id,
         doctorId: doctorProfiles[i]!.id,
@@ -270,7 +269,6 @@ async function main() {
         livekitRoom: `appt-${doctorProfiles[i]!.id.slice(-6)}-${patientProfiles[i]!.id.slice(-6)}`,
       },
     });
-    confirmedAppointments.push(appointment);
   }
 
   // ── 6. Create completed appointments (past) + consultation records ──────
@@ -333,7 +331,7 @@ async function main() {
   ];
 
   for (let i = 0; i < 3; i++) {
-    const appointment = await prisma.appointment.create({
+    await prisma.appointment.create({
       data: {
         patientId: patientProfiles[i]!.id,
         doctorId: doctorProfiles[i]!.id,
