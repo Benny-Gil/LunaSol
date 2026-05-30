@@ -10,6 +10,12 @@ interface ConsultationSessionProps {
   appointmentId: string
   /** Called when the participant disconnects / leaves the room. */
   onLeave: () => void
+  /**
+   * Optional content rendered in a collapsible drawer next to the video (e.g.
+   * the doctor's notes/prescription panel). When omitted, the video fills the
+   * screen as before — so the patient side is unchanged.
+   */
+  sidePanel?: React.ReactNode
 }
 
 /**
@@ -17,11 +23,12 @@ interface ConsultationSessionProps {
  * given appointment, then renders the native LiveKit video UI (which includes
  * the ControlBar — mute, camera toggle, leave). No iframe.
  */
-export default function ConsultationSession({ appointmentId, onLeave }: ConsultationSessionProps) {
+export default function ConsultationSession({ appointmentId, onLeave, sidePanel }: ConsultationSessionProps) {
   const { getToken } = useAuth()
   const [token, setToken] = useState<string>()
   const [serverUrl, setServerUrl] = useState<string>()
   const [error, setError] = useState<string>()
+  const [panelOpen, setPanelOpen] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -66,17 +73,37 @@ export default function ConsultationSession({ appointmentId, onLeave }: Consulta
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-      <LiveKitRoom
-        token={token}
-        serverUrl={serverUrl}
-        connect
-        data-lk-theme="default"
-        onDisconnected={onLeave}
-        style={{ height: '100%' }}
-      >
-        <VideoConference />
-      </LiveKitRoom>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', background: '#111827' }}>
+      <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
+        <LiveKitRoom
+          token={token}
+          serverUrl={serverUrl}
+          connect
+          data-lk-theme="default"
+          onDisconnected={onLeave}
+          style={{ height: '100%' }}
+        >
+          <VideoConference />
+        </LiveKitRoom>
+        {sidePanel && !panelOpen && (
+          <button onClick={() => setPanelOpen(true)} style={notesTabStyle}>
+            📝 Notes
+          </button>
+        )}
+      </div>
+      {sidePanel && panelOpen && (
+        <aside style={drawerStyle}>
+          <div style={drawerHeaderStyle}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Consultation
+            </span>
+            <button onClick={() => setPanelOpen(false)} style={drawerHideButtonStyle}>
+              Hide
+            </button>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>{sidePanel}</div>
+        </aside>
+      )}
     </div>
   )
 }
@@ -100,4 +127,50 @@ const leaveButtonStyle: React.CSSProperties = {
   fontWeight: 600,
   color: '#111827',
   cursor: 'pointer',
+}
+
+const drawerStyle: React.CSSProperties = {
+  width: '400px',
+  maxWidth: '90vw',
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  background: '#f3f4f6',
+  borderLeft: '1px solid #e5e7eb',
+}
+
+const drawerHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '14px 16px',
+  borderBottom: '1px solid #e5e7eb',
+  background: '#ffffff',
+}
+
+const drawerHideButtonStyle: React.CSSProperties = {
+  padding: '6px 12px',
+  background: 'none',
+  border: '1px solid #d1d5db',
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 600,
+  color: '#374151',
+  cursor: 'pointer',
+}
+
+const notesTabStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '16px',
+  right: '16px',
+  padding: '8px 14px',
+  background: '#ffffff',
+  border: 'none',
+  borderRadius: '8px',
+  fontSize: '13px',
+  fontWeight: 600,
+  color: '#111827',
+  cursor: 'pointer',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+  zIndex: 51,
 }
