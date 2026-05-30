@@ -60,6 +60,7 @@ model DoctorProfile {
   specialization    String
   profilePictureUrl String?
   contactDetails    String?
+  acceptingInstant  Boolean            @default(false)
   slots             AvailabilitySlot[]
   appointments      Appointment[]
 }
@@ -84,8 +85,9 @@ model Appointment {
   patient   PatientProfile     @relation(fields: [patientId], references: [id])
   doctorId  String
   doctor    DoctorProfile      @relation(fields: [doctorId], references: [id])
-  slotId    String             @unique
-  slot      AvailabilitySlot   @relation(fields: [slotId], references: [id])
+  slotId    String?            @unique
+  slot      AvailabilitySlot?  @relation(fields: [slotId], references: [id])
+  isInstant Boolean            @default(false)
   status      AppointmentStatus  @default(PENDING)
   livekitRoom String?
   createdAt DateTime           @default(now())

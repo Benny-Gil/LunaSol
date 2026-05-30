@@ -10,6 +10,7 @@ import { AccessToken, WebhookReceiver } from 'livekit-server-sdk'
 import { PrismaService } from '../prisma/prisma.service'
 import { NotificationsService } from '../notifications/notifications.service'
 import { BookAppointmentDto } from './dto/book-appointment.dto'
+import { InstantAppointmentDto } from './dto/instant-appointment.dto'
 import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto'
 import { AppointmentStatus } from '@prisma/client'
 
@@ -102,13 +103,46 @@ export class AppointmentsService {
     }
   }
 
+  async createInstant(clerkId: string, dto: InstantAppointmentDto) {
+    const { patient } = await this.getPatientProfile(clerkId)
+
+    const doctor = await this.prisma.doctorProfile.findUnique({
+      where: { id: dto.doctorId },
+      include: { user: true },
+    })
+    if (!doctor) throw new NotFoundException('Doctor not found')
+    if (!doctor.acceptingInstant) {
+      throw new ConflictException('This doctor is not accepting instant consultations right now')
+    }
+
+    const appointment = await this.prisma.appointment.create({
+      data: {
+        patientId: patient.id,
+        doctorId: doctor.id,
+        slotId: null,
+        isInstant: true,
+        status: AppointmentStatus.PENDING,
+      },
+      include: { slot: true, doctor: true, patient: true },
+    })
+
+    await this.createNotification(
+      doctor.user.id,
+      'APPOINTMENT_REQUEST',
+      `${patient.name} is requesting an instant consultation now`,
+    )
+
+    return appointment
+  }
+
   async listMine(clerkId: string, role: string, patientId?: string) {
     if (role === 'doctor') {
       const { doctor } = await this.getDoctorProfile(clerkId)
       return this.prisma.appointment.findMany({
         where: { doctorId: doctor.id, ...(patientId ? { patientId } : {}) },
         include: { slot: true, patient: true, record: { include: { prescriptions: true } } },
-        orderBy: { slot: { startTime: 'asc' } },
+        // slot may be null for instant appointments; fall back to creation order.
+        orderBy: [{ slot: { startTime: 'asc' } }, { createdAt: 'asc' }],
       })
     }
 
@@ -116,7 +150,8 @@ export class AppointmentsService {
     return this.prisma.appointment.findMany({
       where: { patientId: patient.id },
       include: { slot: true, doctor: true, record: { include: { prescriptions: true } } },
-      orderBy: { slot: { startTime: 'asc' } },
+      // slot may be null for instant appointments; fall back to creation order.
+      orderBy: [{ slot: { startTime: 'asc' } }, { createdAt: 'asc' }],
     })
   }
 
@@ -146,7 +181,9 @@ export class AppointmentsService {
     await this.createNotification(
       appointment.doctor.user.id,
       'APPOINTMENT_CANCELLED',
-      `${patient.name} cancelled their appointment on ${appointment.slot.startTime.toLocaleDateString()}`,
+      appointment.isInstant || !appointment.slot
+        ? `${patient.name} cancelled their instant consultation request`
+        : `${patient.name} cancelled their appointment on ${appointment.slot.startTime.toLocaleDateString()}`,
     )
 
     return updated
@@ -235,7 +272,9 @@ export class AppointmentsService {
     await this.createNotification(
       appointment.patient.user.id,
       'APPOINTMENT_CONFIRMED',
-      `Your appointment on ${appointment.slot.startTime.toLocaleDateString()} has been confirmed. Join the session when it's time.`,
+      appointment.isInstant || !appointment.slot
+        ? `Your instant consultation has been confirmed. Join the session now.`
+        : `Your appointment on ${appointment.slot.startTime.toLocaleDateString()} has been confirmed. Join the session when it's time.`,
     )
 
     return updated
@@ -308,15 +347,19 @@ export class AppointmentsService {
       throw new ConflictException('Session not available')
     }
 
-    // Enforce the join window server-side. The client gates the "Join" button on
-    // the same window, but the token endpoint must not be joinable out-of-band.
-    const now = Date.now()
-    const start = appointment.slot.startTime.getTime()
-    const end = appointment.slot.endTime.getTime()
-    if (now < start - JOIN_LEAD_MS || now > end) {
-      throw new ForbiddenException(
-        'The consultation room is only open from 5 minutes before the appointment until it ends',
-      )
+    // Enforce the join window server-side for scheduled appointments. The client
+    // gates the "Join" button on the same window, but the token endpoint must not
+    // be joinable out-of-band. Instant appointments have no slot, so the room is
+    // open immediately while the appointment is CONFIRMED.
+    if (!appointment.isInstant && appointment.slot) {
+      const now = Date.now()
+      const start = appointment.slot.startTime.getTime()
+      const end = appointment.slot.endTime.getTime()
+      if (now < start - JOIN_LEAD_MS || now > end) {
+        throw new ForbiddenException(
+          'The consultation room is only open from 5 minutes before the appointment until it ends',
+        )
+      }
     }
 
     const apiKey = process.env.LIVEKIT_API_KEY

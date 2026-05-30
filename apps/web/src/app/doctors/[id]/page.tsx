@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth, Show, UserButton } from '@clerk/nextjs'
-import { User, Calendar, Clock, ArrowLeft } from 'lucide-react'
+import { User, Calendar, Clock, ArrowLeft, Zap } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface Doctor {
@@ -13,6 +13,7 @@ interface Doctor {
   bio: string | null
   profilePictureUrl: string | null
   contactDetails: string | null
+  acceptingInstant?: boolean
 }
 
 interface Slot {
@@ -42,6 +43,7 @@ export default function DoctorDetailPage() {
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [startingInstant, setStartingInstant] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -82,6 +84,29 @@ export default function DoctorDetailPage() {
       setError(err.message || 'Booking failed. Please try again.')
     } finally {
       setBooking(false)
+    }
+  }
+
+  async function handleStartInstant() {
+    if (!isSignedIn) {
+      router.push('/sign-in')
+      return
+    }
+
+    setStartingInstant(true)
+    setError('')
+    try {
+      const token = await getToken()
+      const appt = await apiFetch('/appointments/instant', {
+        token: token || undefined,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doctorId: id }),
+      })
+      router.push(`/dashboard/patient/appointments/${appt.id}`)
+    } catch (err: any) {
+      setError(err.message || 'Could not start instant consultation. Please try again.')
+      setStartingInstant(false)
     }
   }
 
@@ -160,6 +185,39 @@ export default function DoctorDetailPage() {
 
         {/* Slot picker */}
         <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '24px', position: 'sticky', top: '80px' }}>
+          {doctor.acceptingInstant && (
+            <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #f3f4f6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Zap size={18} color="#059669" />
+                <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Available now</h2>
+              </div>
+              <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 14px', lineHeight: 1.5 }}>
+                This doctor is online. Start a consultation right now without booking a slot.
+              </p>
+              <button
+                onClick={handleStartInstant}
+                disabled={startingInstant}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: startingInstant ? '#a7f3d0' : '#059669',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: startingInstant ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <Zap size={16} /> {startingInstant ? 'Starting...' : !isSignedIn ? 'Sign in to start' : 'Start instant consultation'}
+              </button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
             <Calendar size={18} color="#111827" />
             <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Available slots</h2>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { Calendar, Clock, Video, ArrowLeft } from 'lucide-react'
+import { Calendar, Clock, Video, ArrowLeft, Zap } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ConsultationSession from '@/components/ConsultationSession'
 
@@ -11,8 +11,9 @@ interface Appointment {
   id: string
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
   livekitRoom: string | null
+  isInstant: boolean
   doctor: { id: string; name: string; specialization: string }
-  slot: { startTime: string; endTime: string }
+  slot: { startTime: string; endTime: string } | null
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -58,9 +59,11 @@ export default function PatientAppointmentDetail() {
     return <ConsultationSession appointmentId={appt.id} onLeave={() => setInSession(false)} />
   }
 
-  const start = appt ? new Date(appt.slot.startTime).getTime() : 0
-  const end = appt ? new Date(appt.slot.endTime).getTime() : 0
-  const withinWindow = now >= start - JOIN_LEAD_MS && now <= end
+  const isInstant = !!appt?.isInstant || !appt?.slot
+  const start = appt?.slot ? new Date(appt.slot.startTime).getTime() : 0
+  const end = appt?.slot ? new Date(appt.slot.endTime).getTime() : 0
+  // Instant consultations have no slot window — the room is open as soon as it's confirmed.
+  const withinWindow = isInstant || (now >= start - JOIN_LEAD_MS && now <= end)
   const canJoin = appt?.status === 'CONFIRMED' && !!appt.livekitRoom && withinWindow
   const statusStyle = (appt && STATUS_COLORS[appt.status]) || { bg: '#f3f4f6', text: '#374151' }
 
@@ -90,12 +93,20 @@ export default function PatientAppointmentDetail() {
             </div>
 
             <div style={{ display: 'flex', gap: '24px', marginBottom: '28px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#374151' }}>
-                <Calendar size={16} /> {new Date(appt.slot.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#374151' }}>
-                <Clock size={16} /> {new Date(appt.slot.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
-              </span>
+              {isInstant || !appt.slot ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#059669', fontWeight: 600 }}>
+                  <Zap size={16} /> Instant consultation · Now
+                </span>
+              ) : (
+                <>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#374151' }}>
+                    <Calendar size={16} /> {new Date(appt.slot.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#374151' }}>
+                    <Clock size={16} /> {new Date(appt.slot.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                  </span>
+                </>
+              )}
             </div>
 
             {appt.status === 'CONFIRMED' && (
