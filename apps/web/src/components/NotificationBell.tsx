@@ -28,7 +28,11 @@ export default function NotificationBell() {
   async function handleClick(id: string, type: string) {
     await markRead(id)
     setOpen(false)
-    if (type.startsWith('APPOINTMENT')) {
+    // A follow-up suggestion (issue #82) deep-links the patient into the
+    // booking flow so they can rebook right away.
+    if (type === 'APPOINTMENT_FOLLOWUP_SUGGESTED') {
+      router.push('/doctors')
+    } else if (type.startsWith('APPOINTMENT')) {
       router.push(
         role === 'doctor'
           ? '/dashboard/doctor'

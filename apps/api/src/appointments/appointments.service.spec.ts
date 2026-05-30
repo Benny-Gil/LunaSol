@@ -200,3 +200,84 @@ describe('AppointmentsService.getLivekitToken', () => {
     expect(payload.video.room).toBe(ROOM)
   })
 })
+
+describe('AppointmentsService.suggestFollowUp', () => {
+  let service: AppointmentsService
+  let prisma: {
+    appointment: { findUnique: jest.Mock }
+    user: { findUnique: jest.Mock }
+    notification: { create: jest.Mock }
+  }
+  let notifications: { emitToUser: jest.Mock }
+
+  const CLERK_ID = 'clerk_doctor_1'
+
+  const completedAppointment = {
+    id: 'appt-1',
+    doctorId: 'doc-1',
+    patientId: 'pat-1',
+    status: AppointmentStatus.COMPLETED,
+    doctor: { id: 'doc-1', name: 'Alice' },
+    patient: { id: 'pat-1', name: 'Bob', user: { id: 'user-pat-1' } },
+  }
+
+  beforeEach(() => {
+    prisma = {
+      appointment: { findUnique: jest.fn() },
+      user: { findUnique: jest.fn() },
+      notification: { create: jest.fn() },
+    }
+    notifications = { emitToUser: jest.fn() }
+    service = new AppointmentsService(prisma as any, notifications as any)
+  })
+
+  it('throws NotFound when the appointment does not exist', async () => {
+    prisma.user.findUnique.mockResolvedValue({ clerkId: CLERK_ID, doctor: { id: 'doc-1', name: 'Alice' } })
+    prisma.appointment.findUnique.mockResolvedValue(null)
+
+    await expect(service.suggestFollowUp(CLERK_ID, 'missing')).rejects.toBeInstanceOf(NotFoundException)
+  })
+
+  it('throws Forbidden when the appointment belongs to another doctor', async () => {
+    prisma.user.findUnique.mockResolvedValue({ clerkId: CLERK_ID, doctor: { id: 'doc-OTHER', name: 'Eve' } })
+    prisma.appointment.findUnique.mockResolvedValue(completedAppointment)
+
+    await expect(service.suggestFollowUp(CLERK_ID, 'appt-1')).rejects.toBeInstanceOf(ForbiddenException)
+  })
+
+  it('throws Conflict when the appointment is still pending', async () => {
+    prisma.user.findUnique.mockResolvedValue({ clerkId: CLERK_ID, doctor: { id: 'doc-1', name: 'Alice' } })
+    prisma.appointment.findUnique.mockResolvedValue({
+      ...completedAppointment,
+      status: AppointmentStatus.PENDING,
+    })
+
+    await expect(service.suggestFollowUp(CLERK_ID, 'appt-1')).rejects.toBeInstanceOf(ConflictException)
+  })
+
+  it('persists and emits a follow-up notification to the patient', async () => {
+    prisma.user.findUnique.mockResolvedValue({ clerkId: CLERK_ID, doctor: { id: 'doc-1', name: 'Alice' } })
+    prisma.appointment.findUnique.mockResolvedValue(completedAppointment)
+    prisma.notification.create.mockResolvedValue({
+      id: 'notif-1',
+      type: 'APPOINTMENT_FOLLOWUP_SUGGESTED',
+      message: 'msg',
+      createdAt: new Date(),
+    })
+
+    const result = await service.suggestFollowUp(CLERK_ID, 'appt-1')
+
+    expect(result).toEqual({ ok: true })
+    expect(prisma.notification.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        recipientId: 'user-pat-1',
+        type: 'APPOINTMENT_FOLLOWUP_SUGGESTED',
+      }),
+    })
+    expect(notifications.emitToUser).toHaveBeenCalledWith(
+      'user-pat-1',
+      'notification',
+      expect.objectContaining({ id: 'notif-1', type: 'APPOINTMENT_FOLLOWUP_SUGGESTED' }),
+    )
+  })
+})
