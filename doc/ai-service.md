@@ -109,9 +109,45 @@ Browser  →  NestJS  →  FastAPI  →  llama-cpp-python
 4. Pipe the FastAPI `ReadableStream` to the HTTP response using `fetch` + `body.getReader()`
 5. After the stream closes, emit a final `data: {"type":"doctors","payload":[...]}` event with full doctor objects from the DB
 
-### Fallback
+### Fallback tiers (recommendation ladder)
 
-If FastAPI is unavailable or returns an error, NestJS returns all doctors as a fallback `doctors` event without any AI reasoning. The patient still gets a list of doctors — the AI reasoning is just absent.
+The NestJS `ai` module (`apps/api/src/ai/ai.controller.ts`) tries three recommendation
+engines in order, transparently to the web client — every tier emits the **same SSE
+event contract** (`reasoning` / `thought` / `doctors` / `error` / `done`), so the
+frontend (`apps/web/src/lib/useAiRecommendation.ts`) needs no awareness of which tier
+served the response.
+
+| Tier | Engine | When used |
+|---|---|---|
+| **1 — Primary** | **MedGemma** (local GGUF via FastAPI, `apps/ai`) | Only when `MEDGEMMA_ENABLED=true`. Heavy local inference is opt-in. |
+| **2 — Secondary** | **OpenRouter** cloud LLM (`AiService.streamOpenRouterEvents`), default model `google/gemma-4-26b-a4b-it:free` | When Tier 1 is off or its stream errors. This is the **effective default** when MedGemma is disabled. |
+| **3 — Final** | **Local fuzzy / Levenshtein matcher** (in-process, no network) | When Tier 2 errors — including **HTTP 429 rate limiting** or a missing key. |
+
+Each downgrade emits a short `reasoning` banner so the patient sees why the answer
+shifted ("Switching to the OpenRouter cloud engine…", "AI engines unavailable…").
+The final tier always returns a ranked doctor list, so the patient never gets an
+empty result while any doctors exist.
+
+#### OpenRouter (Tier 2) details
+
+- `AiService.streamOpenRouterEvents` POSTs to `${OPENROUTER_BASE_URL}/chat/completions`
+  with `stream: true`, using a system prompt that mirrors the MedGemma safety rules
+  (not-a-doctor, emergency protocol, self-care disclaimer) but a single
+  `[RECOMMENDATIONS]` marker for simpler streaming.
+- The reply text streams as `reasoning` events (with a marker hold-back so the
+  internal `[RECOMMENDATIONS]` marker never leaks); the trailing JSON array is parsed
+  tolerantly into `[{ id, reason }]` and enriched into a `doctors` event.
+- Any non-OK response (incl. 429) or a missing `OPENROUTER_API_KEY` throws, dropping
+  cleanly to Tier 3.
+
+#### Configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MEDGEMMA_ENABLED` | `false` | Turn the local MedGemma/FastAPI tier on. Off → start at OpenRouter. |
+| `OPENROUTER_API_KEY` | — | OpenRouter key. Lives only in the gitignored `.env` (never committed). |
+| `OPENROUTER_MODEL` | `google/gemma-4-26b-a4b-it:free` | OpenRouter model slug. Free models carry a `:free` suffix. |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenRouter API base. |
 
 ---
 
