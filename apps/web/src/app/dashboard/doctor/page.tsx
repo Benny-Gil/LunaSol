@@ -47,11 +47,11 @@ export default async function DoctorDashboard() {
         {/* Quick Stats / Actions */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '40px' }}>
           {[
-            { Icon: Users, title: 'Active Patients', desc: 'View records, history, and notes for your patients.', count: '0 patients' },
-            { Icon: Clock, title: 'Manage Schedule', desc: 'Set your hours, slots, and availability configuration.', count: 'Updated today' },
-            { Icon: ClipboardList, title: 'Appointments Panel', desc: 'Accept, join, or complete telehealth video calls.', count: '0 pending' },
-          ].map(({ Icon, title, desc, count }) => (
-            <div key={title} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
+            { Icon: Users, title: 'Active Patients', href: '/dashboard/doctor/appointments', desc: 'View records, history, and notes for your patients.', count: '0 patients' },
+            { Icon: Clock, title: 'Manage Schedule', href: '/dashboard/doctor/schedule', desc: 'Set your hours, slots, and availability configuration.', count: 'Updated today' },
+            { Icon: ClipboardList, title: 'Appointments Panel', href: '/dashboard/doctor/appointments', desc: 'Accept, join, or complete telehealth video calls.', count: '0 pending' },
+          ].map(({ Icon, title, href, desc, count }) => (
+            <a key={title} href={href} style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)', textDecoration: 'none', display: 'block' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                 <div style={{ display: 'inline-flex', padding: '8px', background: '#f3f4f6', borderRadius: '8px' }}>
                   <Icon size={20} color="#111827" />
@@ -62,7 +62,7 @@ export default async function DoctorDashboard() {
               </div>
               <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px', color: '#111827' }}>{title}</h3>
               <p style={{ fontSize: '14px', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>{desc}</p>
-            </div>
+            </a>
           ))}
         </div>
 
@@ -77,9 +77,9 @@ export default async function DoctorDashboard() {
               Your schedule is clear. You will receive real-time notifications when new patient calls are booked.
             </p>
           </div>
-          <button style={{ background: '#10b981', border: 'none', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+          <a href="/dashboard/doctor/schedule" style={{ background: '#10b981', border: 'none', color: '#ffffff', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textDecoration: 'none' }}>
             View Schedule
-          </button>
+          </a>
         </div>
       </main>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Show, UserButton, useAuth, useUser } from '@clerk/nextjs'
+import { Show, UserButton, SignInButton, SignUpButton, useAuth, useUser } from '@clerk/nextjs'
 import { Search, Filter, User, Sparkles, AlertTriangle, Send, RefreshCw, X, ArrowRight, ShieldCheck, HeartPulse, Info, ClipboardPlus, Check } from 'lucide-react'
 import { useAiRecommendation, ChatMessage } from '../../lib/useAiRecommendation'
 import { SPECIALIZATIONS as SPECIALIZATION_OPTIONS, SymptomSeverity } from '@lunasol/types'
@@ -36,31 +36,78 @@ const QUICK_SYMPTOMS = [
   { label: 'Painful urination', text: 'It burns when I urinate and I feel the urge to go very frequently, with some lower abdominal discomfort.' },
 ]
 
-const formatAiResponse = (content: string, isUser: boolean = false) => {
+type DoctorLink = { id: string; name: string }
+
+const formatAiResponse = (
+  content: string,
+  isUser: boolean = false,
+  doctors: DoctorLink[] = [],
+  onDoctorClick?: (id: string) => void
+) => {
   if (!content) return null
 
-  // Helper to parse bold markdown **text**
+  // Linkify recommended-doctor names mentioned in the text. The model may write
+  // the full name ("Dr. Carlos Reyes"), a titled last name ("Dr. Reyes"), or the
+  // bare name, so we register several aliases per doctor and match the longest
+  // first. Each alias maps to the doctor's id -> clickable profile link.
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const aliasToId = new Map<string, string>()
+  for (const d of doctors || []) {
+    if (!d?.name || !d?.id) continue
+    const full = d.name.trim()
+    const bare = full.replace(/^(Dr\.?|Doctor)\s+/i, '').trim() // strip leading title
+    const last = bare.split(/\s+/).pop() || ''
+    const aliases = [full, bare, last && `Dr. ${last}`, last && `Dr ${last}`, last && last.length >= 4 ? last : '']
+    for (const a of aliases) {
+      if (a && a.length >= 3 && !aliasToId.has(a)) aliasToId.set(a, d.id)
+    }
+  }
+  // Longest aliases first so "Dr. Carlos Reyes" wins over "Reyes".
+  const aliases = Array.from(aliasToId.keys()).sort((a, b) => b.length - a.length)
+
+  const linkifyNames = (text: string, keyBase: string): React.ReactNode[] => {
+    if (isUser || aliases.length === 0) return [text]
+    const pattern = new RegExp(`(${aliases.map(escapeRe).join('|')})`, 'g')
+    const segments = text.split(pattern)
+    return segments.map((seg, i) => {
+      const id = aliasToId.get(seg)
+      if (id) {
+        return (
+          <a
+            key={`${keyBase}-lnk-${i}`}
+            onClick={(e) => { e.stopPropagation(); onDoctorClick?.(id) }}
+            style={{ color: '#6366f1', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {seg}
+          </a>
+        )
+      }
+      return seg
+    })
+  }
+
+  // Helper to parse bold markdown **text**, then linkify doctor names within.
   const parseInline = (text: string) => {
     if (!text) return ''
     const parts = text.split(/(\*\*.*?\*\*)/g)
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <strong 
-            key={i} 
-            style={{ 
-              fontWeight: 700, 
+          <strong
+            key={i}
+            style={{
+              fontWeight: 700,
               color: isUser ? '#ffffff' : '#0f172a',
               background: isUser ? 'none' : 'rgba(99, 102, 241, 0.08)',
               padding: isUser ? '0' : '1px 4px',
               borderRadius: '4px'
             }}
           >
-            {part.slice(2, -2)}
+            {linkifyNames(part.slice(2, -2), `b-${i}`)}
           </strong>
         )
       }
-      return part
+      return <span key={`f-${i}`}>{linkifyNames(part, `p-${i}`)}</span>
     })
   }
 
@@ -358,11 +405,18 @@ export default function DoctorsPage() {
     streamChat,
     messages,
     reasoning,
+    thought,
+    thinking,
     recommendedDoctors,
     loading: aiLoading,
     error: aiError,
     reset: resetAi,
   } = useAiRecommendation()
+
+  // Chain-of-thought preview: auto-expanded while the model is thinking, then
+  // auto-collapsed once thinking ends. The user can still toggle it manually.
+  const [showThought, setShowThought] = useState(false)
+  useEffect(() => { setShowThought(thinking) }, [thinking])
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
@@ -484,11 +538,15 @@ export default function DoctorsPage() {
         </a>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <Show when="signed-out">
-            <a href="/sign-in" style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign In</a>
-            <a href="/sign-up" style={{ padding: '8px 16px', background: '#0f172a', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', textDecoration: 'none', transition: 'background-color 0.2s' }}>Sign Up</a>
+            <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
+              <button style={{ padding: '8px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#475569', background: 'transparent', cursor: 'pointer', transition: 'background-color 0.2s' }}>Sign In</button>
+            </SignInButton>
+            <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
+              <button style={{ padding: '8px 16px', background: '#0f172a', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: '#ffffff', cursor: 'pointer', transition: 'background-color 0.2s' }}>Sign Up</button>
+            </SignUpButton>
           </Show>
           <Show when="signed-in">
-            <a href="/dashboard" style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 600, color: '#0f172a', textDecoration: 'none' }}>Dashboard</a>
+            <a href="/dashboard" style={{ color: '#0f172a', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Dashboard</a>
             <UserButton />
           </Show>
         </div>
@@ -772,6 +830,58 @@ export default function DoctorsPage() {
                           </div>
                         )}
 
+                        {/* Chain-of-thought preview (last assistant bubble only) */}
+                        {!isUser && index === messages.length - 1 && thought && (
+                          <div style={{
+                            marginBottom: '8px',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '12px',
+                            background: '#f8fafc',
+                            overflow: 'hidden'
+                          }}>
+                            <button
+                              onClick={() => setShowThought((v) => !v)}
+                              style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                color: '#64748b'
+                              }}
+                            >
+                              {thinking ? (
+                                <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                              ) : (
+                                <Sparkles size={13} color="#8b5cf6" />
+                              )}
+                              <span>{thinking ? 'Thinking…' : 'Thought process'}</span>
+                              <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#94a3b8' }}>
+                                {showThought ? 'Hide ▲' : 'Show ▼'}
+                              </span>
+                            </button>
+                            {showThought && (
+                              <div style={{
+                                padding: '0 14px 12px',
+                                fontSize: '12.5px',
+                                lineHeight: '1.55',
+                                color: '#64748b',
+                                whiteSpace: 'pre-wrap',
+                                fontStyle: 'italic',
+                                maxHeight: '220px',
+                                overflowY: 'auto'
+                              }}>
+                                {thought}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div style={{
                           padding: '12px 16px',
                           borderRadius: isUser ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
@@ -784,13 +894,13 @@ export default function DoctorsPage() {
                           boxShadow: '0 1px 2px 0 rgba(0,0,0,0.02)',
                           fontWeight: 500
                         }}>
-                          {isPending ? (
+                          {isPending && !thought ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
                               <span style={{ fontSize: '13px', color: '#64748b' }}>Thinking...</span>
                             </div>
                           ) : (
-                            formatAiResponse(msg.content, isUser)
+                            formatAiResponse(msg.content, isUser, recommendedDoctors, (id) => router.push(`/doctors/${id}`))
                           )}
                           {!isUser && aiLoading && index === messages.length - 1 && <span className="typing-cursor" />}
                         </div>
