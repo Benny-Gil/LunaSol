@@ -410,6 +410,7 @@ export default function DoctorsPage() {
     recommendedDoctors,
     loading: aiLoading,
     error: aiError,
+    mode: aiMode,
     reset: resetAi,
   } = useAiRecommendation()
 
@@ -505,6 +506,10 @@ export default function DoctorsPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
         .typing-cursor {
           display: inline-block;
@@ -975,6 +980,26 @@ export default function DoctorsPage() {
           {/* 4. AI Recommended Doctors List (Horizontal Carousel) */}
           {recommendedDoctors.length > 0 && (
             <div style={{ marginTop: '36px' }}>
+              {/* Quick-match notice: shown when the local fallback tier served the
+                  results (smart matching busy/rate-limited). Calm + reassuring. */}
+              {aiMode === 'basic' && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '16px',
+                  padding: '14px 18px',
+                  marginBottom: '20px',
+                  color: '#475569',
+                  fontSize: '13.5px',
+                  lineHeight: '1.5'
+                }}>
+                  <Info size={18} color="#94a3b8" style={{ flexShrink: 0, marginTop: '1px' }} />
+                  <span>Smart matching is busy right now — showing a quick keyword-based match. These are reliable suggestions based on the symptoms you described.</span>
+                </div>
+              )}
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={16} color="#8b5cf6" />
                 <span>Suggested specialists ({recommendedDoctors.length})</span>

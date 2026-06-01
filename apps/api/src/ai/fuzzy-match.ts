@@ -218,16 +218,16 @@ function bucketFor(specLower: string, score: number): Bucket {
   return 3
 }
 
-function reasonFor(specialization: string, bucket: Bucket): string {
+function reasonFor(bucket: Bucket): string {
   switch (bucket) {
     case 0:
-      return `Strong match: your symptoms closely align with their ${specialization} specialization.`
+      return 'Closely matches the symptoms you described.'
     case 1:
-      return 'General consultation recommended as a good starting point (AI mapping offline).'
+      return 'A good first stop — they can assess your symptoms and refer you onward if needed.'
     case 2:
-      return `Possible match: some symptoms may relate to their ${specialization} specialization (AI mapping offline).`
+      return 'May be relevant to some of the symptoms you described.'
     default:
-      return `Also available: ${specialization} (AI mapping offline).`
+      return 'Also available in our network.'
   }
 }
 
@@ -261,6 +261,6 @@ export function rankDoctorsFuzzy(query: string, doctors: FuzzyDoctor[]): RankedD
     specialization: doc.specialization,
     bio: doc.bio,
     profilePictureUrl: doc.profilePictureUrl,
-    reason: reasonFor(doc.specialization, bucket),
+    reason: reasonFor(bucket),
   }))
 }

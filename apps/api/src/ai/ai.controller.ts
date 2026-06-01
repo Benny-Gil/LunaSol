@@ -111,11 +111,14 @@ export class AiController {
         }
 
         // ── Tier 3: local fuzzy / Levenshtein matcher ──
+        // Signal "basic" mode so the UI can show a calm quick-match banner
+        // instead of the LLM conversational experience.
+        subscriber.next({ type: 'mode', data: 'basic' })
         subscriber.next({
           type: 'reasoning',
-          data: '⚠️ Offline Fallback: AI engines are currently unavailable. Mapping symptoms using the local fuzzy matching database...\n\n'
+          data: 'Here are the specialists whose focus best matches what you described. If your symptoms change or get worse, please see a doctor promptly.\n\n'
         })
-        await new Promise(resolve => setTimeout(resolve, 600))
+        await new Promise(resolve => setTimeout(resolve, 400))
 
         try {
           const fallbackList = rankDoctorsFuzzy(userTexts, dbDoctors)

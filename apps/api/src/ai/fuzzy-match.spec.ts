@@ -26,7 +26,7 @@ describe('rankDoctorsFuzzy', () => {
   it('ranks the discriminative-keyword specialty first', () => {
     const ranked = rankDoctorsFuzzy('I have a terrible migraine', DOCTORS)
     expect(ranked[0]?.specialization).toBe('Neurology')
-    expect(ranked[0]?.reason).toMatch(/Strong match/)
+    expect(ranked[0]?.reason).toMatch(/Closely matches/)
   })
 
   it('tolerates typos via Levenshtein (migrane → Neurology)', () => {
@@ -52,7 +52,7 @@ describe('rankDoctorsFuzzy', () => {
   it('surfaces a generalist when nothing matches (safety floor)', () => {
     const ranked = rankDoctorsFuzzy('asdfgh qwerty zxcvbn', DOCTORS)
     expect(ranked[0]?.specialization).toMatch(/General Medicine|Family Medicine/)
-    expect(ranked[0]?.reason).toMatch(/General consultation/)
+    expect(ranked[0]?.reason).toMatch(/good first stop/)
   })
 
   it('breaks the generalist tie deterministically (Family before General)', () => {
