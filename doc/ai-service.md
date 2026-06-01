@@ -140,6 +140,27 @@ empty result while any doctors exist.
 - Any non-OK response (incl. 429) or a missing `OPENROUTER_API_KEY` throws, dropping
   cleanly to Tier 3.
 
+#### Fuzzy matcher (Tier 3) details
+
+`apps/api/src/ai/fuzzy-match.ts` (`rankDoctorsFuzzy`, unit-tested in
+`fuzzy-match.spec.ts`) maps the symptom text to specializations with no network:
+
+- **Discriminative (IDF-style) weighting:** each keyword's weight is derived from
+  the map itself — `weight(k) = ln(1 + N / df(k))`, where `df(k)` is how many of the
+  `N` specializations list it. A keyword unique to one specialty ("migraine",
+  "glaucoma") outweighs a generic/overlapping one ("pain", "stomach", "joint"), so a
+  single vague symptom no longer inflates several specialties equally. Self-maintaining
+  as the keyword map grows.
+- **Generalist safety floor:** General/Family Medicine carry a small baseline score,
+  so a vague or unmatched query surfaces a generalist first while real specialty
+  matches still outrank them.
+- **Confidence tiers:** results are bucketed strong → generalist → possible → other,
+  which drives both ordering (deterministic, with a name/specialty tie-break) and the
+  reason text.
+- **Hardening:** single-word keywords match on token boundaries (not unbounded
+  substrings); distance-2 fuzzy matches require a shared first letter; and a keyword
+  negated by a preceding no/not/without is ignored.
+
 #### Configuration
 
 | Variable | Default | Purpose |
