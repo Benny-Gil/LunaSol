@@ -45,6 +45,9 @@ Copy `.env.example` to `.env` at the repo root. Required vars:
 | `CLERK_SECRET_KEY` | web, api |
 | `CLERK_WEBHOOK_SECRET` | api |
 | `DATABASE_URL` | api |
+| `MEDGEMMA_ENABLED` | api — turns the local MedGemma (FastAPI) tier on; default `false` |
+| `OPENROUTER_API_KEY` | api — key for the OpenRouter secondary AI tier (gitignored, never committed) |
+| `OPENROUTER_MODEL` | api — OpenRouter model slug; default `google/gemma-4-26b-a4b-it:free` |
 
 `INTERNAL_API_URL` is set automatically in `docker-compose.yml` (`http://api:3001`) for server-side fetches from the web container.
 
@@ -61,6 +64,8 @@ Browser → Cloudflare Tunnel → Nginx :80
 `api` communicates with `ai` and `db` (Postgres :5432) over the internal Docker network — neither is publicly reachable. The `ai` service is an **in-repo Python FastAPI app at `apps/ai`** (:8000); the NestJS `ai` module (`apps/api/src/ai`) is the proxy/client to it. The web AI matcher streams from it via Server-Sent Events (`apps/web/src/lib/useAiRecommendation.ts`).
 
 The `ai` service runs a **local quantized LLM** (MedGemma, the `*.gguf` file at the repo root) via `llama-cpp-python` — no external API key. `src/model.py` loads the model, `src/triage.py` does symptom triage / doctor matching, `src/schemas.py` holds Pydantic DTOs. Tests are `pytest` from `apps/ai` (`test_main.py`).
+
+**Recommendation ladder (NestJS `apps/api/src/ai`):** the matcher tries three engines in order, all emitting the same SSE contract — **Tier 1** MedGemma/FastAPI (only when `MEDGEMMA_ENABLED=true`), **Tier 2** OpenRouter cloud LLM (`AiService.streamOpenRouterEvents`, default `google/gemma-4-26b-a4b-it:free`) when Tier 1 is off or fails, and **Tier 3** an in-process fuzzy/Levenshtein matcher when OpenRouter errors (incl. 429). See `doc/ai-service.md`.
 
 Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud project (`NEXT_PUBLIC_LIVEKIT_URL`), not through Nginx/the Tunnel. The API only mints join tokens and receives LiveKit webhooks at `/api/livekit/webhook`. See `doc/video.md`.
 
