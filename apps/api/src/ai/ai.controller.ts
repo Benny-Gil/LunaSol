@@ -91,24 +91,37 @@ export class AiController {
               if (line.startsWith('event:')) {
                 currentEvent = line.substring(6).trim()
               } else if (line.startsWith('data:')) {
-                // Strip the "data:" prefix and at most one leading space (the
-                // SSE field separator). Do NOT trim the remainder: LLM tokens
-                // carry their own leading spaces, so trimming collides words
-                // together (e.g. "The user" -> "Theuser").
-                let data = line.substring(5)
-                if (data.startsWith(' ')) data = data.slice(1)
+                // SSE field separator), then JSON-decode. The AI service
+                // JSON-encodes every payload (see _sse in triage.py), so a
+                // single parse restores the original value: reasoning strings
+                // keep their real newlines (which would otherwise break SSE
+                // framing) and recommendations come back as an array. Fall
+                // back to the raw text if a line is somehow not valid JSON.
+                let raw = line.substring(5)
+                if (raw.startsWith(' ')) raw = raw.slice(1)
+                let data: unknown
+                try {
+                  data = JSON.parse(raw)
+                } catch {
+                  data = raw
+                }
                 if (currentEvent === 'reasoning') {
-                  subscriber.next({ type: 'reasoning', data })
+                  subscriber.next({ type: 'reasoning', data: data as string })
+                } else if (currentEvent === 'thought') {
+                  // Chain-of-thought preview: shown live in the UI while the
+                  // model is thinking, then collapsed once the reply begins.
+                  subscriber.next({ type: 'thought', data: data as string })
                 } else if (currentEvent === 'recommendations') {
                   try {
-                    const matchedDocs = JSON.parse(data)
+                    const matchedDocs = typeof data === 'string' ? JSON.parse(data) : data
                     const enriched = await this.enrichDoctors(matchedDocs)
                     subscriber.next({ type: 'doctors', data: enriched })
                   } catch (e) {
                     console.error('Error parsing or enriching doctors payload:', e)
                   }
                 } else if (currentEvent === 'error') {
-                  subscriber.next({ type: 'error', data: data.trim() })
+                  const message = typeof data === 'string' ? data.trim() : String(data)
+                  subscriber.next({ type: 'error', data: message })
                 }
               } else if (line === '') {
                 currentEvent = ''

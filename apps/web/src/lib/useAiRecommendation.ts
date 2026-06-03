@@ -17,6 +17,8 @@ export interface ChatMessage {
 export function useAiRecommendation() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [reasoning, setReasoning] = useState('')
+  const [thought, setThought] = useState('')
+  const [thinking, setThinking] = useState(false)
   const [recommendedDoctors, setRecommendedDoctors] = useState<AiRecommendedDoctor[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,6 +36,8 @@ export function useAiRecommendation() {
   const reset = useCallback(() => {
     stop()
     setReasoning('')
+    setThought('')
+    setThinking(false)
     setMessages([])
     setRecommendedDoctors([])
     setError(null)
@@ -49,7 +53,16 @@ export function useAiRecommendation() {
     const es = new EventSource(url)
     eventSourceRef.current = es
 
+    es.addEventListener('thought', (e) => {
+      // Chain-of-thought preview. NestJS forwards the payload as a plain
+      // string, so e.data is used directly (matching the reasoning handler).
+      setThinking(true)
+      setThought((prev) => prev + e.data)
+    })
+
     es.addEventListener('reasoning', (e) => {
+      // First reasoning token means thinking is done — collapse the preview.
+      setThinking(false)
       const chunk = e.data
       setReasoning((prev) => prev + chunk)
     })
@@ -70,6 +83,7 @@ export function useAiRecommendation() {
     })
 
     es.addEventListener('done', () => {
+      setThinking(false)
       stop()
     })
 
@@ -94,14 +108,24 @@ export function useAiRecommendation() {
     // Pre-create the assistant's typing bubble
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
     setReasoning('')
+    setThought('')
+    setThinking(false)
 
     const url = `/api/ai/recommend?history=${encodeURIComponent(JSON.stringify(chatHistory))}`
     const es = new EventSource(url)
     eventSourceRef.current = es
 
     let accumulatedReasoning = ''
+    let accumulatedThought = ''
+
+    es.addEventListener('thought', (e) => {
+      setThinking(true)
+      accumulatedThought += e.data
+      setThought(accumulatedThought)
+    })
 
     es.addEventListener('reasoning', (e) => {
+      setThinking(false)
       const chunk = e.data
       accumulatedReasoning += chunk
       setReasoning(accumulatedReasoning)
@@ -133,6 +157,7 @@ export function useAiRecommendation() {
     })
 
     es.addEventListener('done', () => {
+      setThinking(false)
       stop()
     })
 
@@ -157,6 +182,8 @@ export function useAiRecommendation() {
     messages,
     setMessages,
     reasoning,
+    thought,
+    thinking,
     recommendedDoctors,
     loading,
     error,
