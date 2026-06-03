@@ -37,6 +37,10 @@ services:
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
       - NEXT_PUBLIC_LIVEKIT_URL=${NEXT_PUBLIC_LIVEKIT_URL}
       - AI_ENABLED=${AI_ENABLED:-true}
+      - MEDGEMMA_ENABLED=${MEDGEMMA_ENABLED:-false}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-google/gemma-4-26b-a4b-it:free}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
     volumes:
       - uploads_data:/app/uploads
     depends_on:

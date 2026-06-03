@@ -65,6 +65,8 @@ lunasol/
 
 Keeping `ai` separate also means the AI service can be scaled, swapped, or restarted independently without touching the main backend.
 
+The NestJS `ai` module does not depend on `ai` (FastAPI) being up: it runs a three-tier **recommendation ladder** — MedGemma/FastAPI (Tier 1, opt-in via `MEDGEMMA_ENABLED`) → OpenRouter cloud LLM (Tier 2) → an in-process fuzzy/Levenshtein matcher (Tier 3). All tiers emit the same SSE contract, so a downed `ai` container degrades gracefully rather than breaking the matcher. See `doc/ai-service.md`.
+
 ## Modular Monolith & Future Microservices
 
 To facilitate scaling and support potential future transition to microservices, the backend application (`apps/api`) is structured as a **Modular Monolith**.

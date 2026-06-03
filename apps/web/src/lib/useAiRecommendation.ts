@@ -22,6 +22,9 @@ export function useAiRecommendation() {
   const [recommendedDoctors, setRecommendedDoctors] = useState<AiRecommendedDoctor[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Which engine tier produced this response: 'basic' = the local quick-match
+  // fallback (shows a calm banner), null/'ai' = the conversational LLM tiers.
+  const [mode, setMode] = useState<'ai' | 'basic' | null>(null)
 
   const eventSourceRef = useRef<EventSource | null>(null)
 
@@ -41,6 +44,7 @@ export function useAiRecommendation() {
     setMessages([])
     setRecommendedDoctors([])
     setError(null)
+    setMode(null)
   }, [stop])
 
   const streamQuery = useCallback((query: string) => {
@@ -76,6 +80,10 @@ export function useAiRecommendation() {
       }
     })
 
+    es.addEventListener('mode', (e) => {
+      setMode((e.data as 'ai' | 'basic') || null)
+    })
+
     es.addEventListener('error', (e) => {
       const errorMsg = (e as MessageEvent).data || 'An error occurred while streaming recommendations.'
       setError(errorMsg)
@@ -101,6 +109,7 @@ export function useAiRecommendation() {
     setLoading(true)
     setError(null)
     setRecommendedDoctors([])
+    setMode(null)
 
     // Set the messages state
     setMessages(chatHistory)
@@ -150,6 +159,10 @@ export function useAiRecommendation() {
       }
     })
 
+    es.addEventListener('mode', (e) => {
+      setMode((e.data as 'ai' | 'basic') || null)
+    })
+
     es.addEventListener('error', (e) => {
       const errorMsg = (e as MessageEvent).data || 'An error occurred while streaming recommendations.'
       setError(errorMsg)
@@ -187,6 +200,7 @@ export function useAiRecommendation() {
     recommendedDoctors,
     loading,
     error,
+    mode,
     reset,
     stop,
   }
