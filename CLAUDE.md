@@ -60,6 +60,8 @@ Browser → Cloudflare Tunnel → Nginx :80
 
 `api` communicates with `ai` and `db` (Postgres :5432) over the internal Docker network — neither is publicly reachable. The `ai` service is an **in-repo Python FastAPI app at `apps/ai`** (:8000); the NestJS `ai` module (`apps/api/src/ai`) is the proxy/client to it. The web AI matcher streams from it via Server-Sent Events (`apps/web/src/lib/useAiRecommendation.ts`).
 
+The `ai` service runs a **local quantized LLM** (MedGemma, the `*.gguf` file at the repo root) via `llama-cpp-python` — no external API key. `src/model.py` loads the model, `src/triage.py` does symptom triage / doctor matching, `src/schemas.py` holds Pydantic DTOs. Tests are `pytest` from `apps/ai` (`test_main.py`).
+
 Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud project (`NEXT_PUBLIC_LIVEKIT_URL`), not through Nginx/the Tunnel. The API only mints join tokens and receives LiveKit webhooks at `/api/livekit/webhook`. See `doc/video.md`.
 
 ### `apps/web` — Next.js 14
@@ -70,6 +72,8 @@ Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud
 - **Dashboard redirect:** `app/dashboard/page.tsx` is the single entry point after login. It reads the role from `publicMetadata`, calls the role's `/me` endpoint to check `profileComplete`, and redirects to onboarding or the role dashboard accordingly.
 
 ### `apps/api` — NestJS (Modular Monolith)
+
+Modules under `src/`: `ai`, `appointments`, `auth`, `chat`, `consultations`, `doctors`, `patients`, `notifications`, `reminders`, `symptom-logs`. The `prisma` and `common` dirs hold the shared client and cross-cutting decorators/guards.
 
 - **Global guards:** `ClerkAuthGuard` (JWT verification via Clerk JWKS) and `RolesGuard` are applied globally via `APP_GUARD` in `app.module.ts`. Use `@Public()` to opt out of auth, `@Roles('doctor'|'patient')` to restrict by role.
 - **Module rule:** A service in module A must never query DB tables owned by module B directly. Cross-module data access goes through the owning module's service. See `doc/architecture.md`.

@@ -38,7 +38,10 @@ for (let m = START_HOUR * 60; m < END_HOUR * 60; m += STEP_MIN) TIME_ROWS.push(m
 
 function cellStartFor(weekStart: Date, dayIndex: number, minutes: number) {
   const d = addDays(weekStart, dayIndex)
-  d.setHours(0, minutes / 60, minutes % 60, 0)
+  // `minutes` is the absolute minute-of-day (e.g. 480 = 08:00), so split it into
+  // hours and minutes. Passing it straight as the minutes arg of setHours with a
+  // 0 hour collapses every row to ~midnight, making all slots overlap.
+  d.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0)
   return d
 }
 
