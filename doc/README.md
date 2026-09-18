@@ -13,7 +13,6 @@ This directory documents the design decisions behind LunaSol. Each file covers o
 | [ai-service.md](./ai-service.md)       | Local GGUF inference, FastAPI design, SSE streaming chain   |
 | [notifications.md](./notifications.md) | Socket.io gateway, room model, event catalog                |
 | [video.md](./video.md)                 | LiveKit Cloud setup, room auth, webhooks, session lifecycle  |
-| [deployment.md](./deployment.md)       | Docker, Nginx, Cloudflare Tunnel, CI/CD pipeline            |
 | [frontend.md](./frontend.md)           | Next.js App Router, Shadcn, routing, data fetching patterns |
 | [testing.md](./testing.md)             | Vitest, Jest, Playwright, Pytest, architecture, setup flows  |
 | [roadmap.md](./roadmap.md)             | Feature checklist — done, in progress, backlog              |

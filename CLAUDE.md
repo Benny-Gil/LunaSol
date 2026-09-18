@@ -56,7 +56,7 @@ Copy `.env.example` to `.env` at the repo root. Required vars:
 Three runtime services behind a single Nginx entry point:
 
 ```
-Browser → Cloudflare Tunnel → Nginx :80
+Browser → Nginx :80
   /        → web  (Next.js  :3000)
   /api/*   → api  (NestJS   :3001)
 ```
@@ -67,7 +67,7 @@ The `ai` service runs a **local quantized LLM** (MedGemma, the `*.gguf` file at 
 
 **Recommendation ladder (NestJS `apps/api/src/ai`):** the matcher tries three engines in order, all emitting the same SSE contract — **Tier 1** MedGemma/FastAPI (only when `MEDGEMMA_ENABLED=true`), **Tier 2** OpenRouter cloud LLM (`AiService.streamOpenRouterEvents`, default `google/gemma-4-26b-a4b-it:free`) when Tier 1 is off or fails, and **Tier 3** an in-process fuzzy/Levenshtein matcher when OpenRouter errors (incl. 429). See `doc/ai-service.md`.
 
-Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud project (`NEXT_PUBLIC_LIVEKIT_URL`), not through Nginx/the Tunnel. The API only mints join tokens and receives LiveKit webhooks at `/api/livekit/webhook`. See `doc/video.md`.
+Video uses **LiveKit Cloud**: the browser connects directly to the LiveKit Cloud project (`NEXT_PUBLIC_LIVEKIT_URL`), not through Nginx. The API only mints join tokens and receives LiveKit webhooks at `/api/livekit/webhook`. See `doc/video.md`.
 
 ### `apps/web` — Next.js 14
 
@@ -105,8 +105,7 @@ Imported as `@lunasol/types` in both `web` and `api`. Add shared request/respons
 - **Role stored in two places:** Clerk `publicMetadata.role` (in JWT, lowercase `'doctor'`/`'patient'`) and `User.role` in DB (uppercase enum `DOCTOR`/`PATIENT`). Keep them in sync.
 - **No hard deletes on appointments:** Status-only cancellation to preserve medical audit trail.
 
-## Deployment & Branching
+## Branching
 
-- Feature branches PR into **`main`**; never PR a feature branch into `prod`. A release is promoting `main` → `prod` via a PR.
-- Pushing to **`prod`** triggers `.github/workflows/deploy.yml` on a **self-hosted runner**: build images → **`prisma migrate deploy`** → `docker compose -f docker-compose.prod.yml up -d` → health-check `lunasol-prod-api`. Migrations run **before** the new containers start, so any release PR that adds a Prisma migration deploys safely — but it **must include the migration directory** under `apps/api/prisma/migrations/`. The prod DB is only reachable from that runner; you cannot apply prod migrations by hand.
-- More detail in `doc/deployment.md`. Other `doc/*.md` files cover auth, notifications, video, the AI service, data model, and testing.
+- Feature branches PR into **`main`**. The project has no production deployment at the moment.
+- The `doc/*.md` files cover architecture, auth, notifications, video, the AI service, data model, and testing.
