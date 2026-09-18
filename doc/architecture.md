@@ -2,15 +2,12 @@
 
 ## Overview
 
-LunaSol is a full-stack telehealth web application split across three runtime services (frontend, backend, AI) plus infrastructure services (database, video, notifications, reverse proxy). All services run in Docker and are exposed through a single Nginx entry point connected to the internet via Cloudflare Tunnel.
+LunaSol is a full-stack telehealth web application split across three runtime services (frontend, backend, AI) plus infrastructure services (database, video, notifications, reverse proxy). All services run in Docker behind a single Nginx entry point.
 
 ## Service Map
 
 ```
 [Browser]
-    │
-    ▼
-[Cloudflare Tunnel]
     │
     ▼
 [Nginx :80]
@@ -21,7 +18,7 @@ LunaSol is a full-stack telehealth web application split across three runtime se
 [api] ── internal Docker network ──► [ai]       (FastAPI   :8000)   ← never public
 [api] ── internal Docker network ──► [db]       (Postgres  :5432)   ← never public
 
-[browser] ── WebRTC (signaling + media) ──► [LiveKit Cloud]   ← video, direct (not via tunnel)
+[browser] ── WebRTC (signaling + media) ──► [LiveKit Cloud]   ← video, direct (not via Nginx)
 [LiveKit Cloud] ── webhook ──► [api] /api/livekit/webhook
 ```
 
@@ -37,7 +34,6 @@ lunasol/
 │   └── types/        # Shared TypeScript DTOs (web ↔ api)
 ├── doc/              # This directory
 ├── docker-compose.yml
-├── docker-compose.prod.yml
 ├── turbo.json
 └── package.json
 ```
